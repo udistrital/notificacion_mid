@@ -92,7 +92,7 @@ func main() {
 
 	go h.Run()
 
-	// http.Handle("/", http.FileServer(http.Dir(".")))
+	http.Handle("/", http.FileServer(http.Dir(".")))
 	http.HandleFunc("/register", wsHandler)
 	http.HandleFunc("/unregister", unregister)
 	http.HandleFunc("/push_notification", push_notification)
