@@ -11,11 +11,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"bytes"
+	"encoding/binary"
 )
 
 var addr = flag.String("addr", ":"+os.Getenv("APP_PORT"), "http service address")
 var indexFile = "index.html"
 var h models.Hub
+var url_crud = os.Getenv("URL_CRUD")
 
 type RequestMessage struct {
 	Type  		string 		`json:"type"`
@@ -66,18 +69,38 @@ func push_notification(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Unmarshal
-	var msg RequestMessage
+	var msg models.Notificacion
+	var response models.Notificacion
+	var tipo_notificacion string
+
 	err = json.Unmarshal(b, &msg)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	switch msg.Type {
+	if msg.UsuarioDestino == 0{
+			tipo_notificacion = "profile"
+	}else{
+			tipo_notificacion = "personal"
+	}
+
+	buf := &bytes.Buffer{}
+	err = binary.Write(buf, binary.BigEndian, msg)
+	if err != nil {
+	    panic(err)
+	}
+	mensaje := buf.Bytes()
+
+	switch tipo_notificacion {
 	case "personal":
-		h.SendPersonalMessage(models.SendingMessage{M:[]byte(msg.Message), ConnValues: models.ConnValues{C:nil, Id:msg.Id, Profile:nil}})
+		models.SendJson(url_crud+"/v1/notificacion","POST",&response, &msg)
+		h.SendPersonalMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:fmt.Sprint(msg.UsuarioDestino), Profile:nil}})
 	case "profile":
-		h.SendProfileMessage(models.SendingMessage{M:[]byte(msg.Message), ConnValues: models.ConnValues{C:nil, Id:msg.Id, Profile:msg.Profile}})
+		models.SendJson(url_crud+"/v1/notificacion","POST",&response, &msg)
+		var profiles [] string
+		profiles[0] = fmt.Sprint(msg.PerfilDestino)
+		h.SendProfileMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:"", Profile:profiles}})
 	}
 
 }
@@ -96,7 +119,7 @@ func main() {
 	http.HandleFunc("/register", wsHandler)
 	http.HandleFunc("/unregister", unregister)
 	http.HandleFunc("/push_notification", push_notification)
-	http.HandleFunc("/get_notification", get_notification)
+	// http.HandleFunc("/get_notification", get_notification)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}

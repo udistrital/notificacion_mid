@@ -7,7 +7,7 @@ import (
 
 )
 
-func sendJson(url string, trequest string, target interface{}, datajson interface{}) error {
+func SendJson(url string, trequest string, target interface{}, datajson interface{}) error {
 	b := new(bytes.Buffer)
 	if datajson != nil{
 			json.NewEncoder(b).Encode(datajson)
