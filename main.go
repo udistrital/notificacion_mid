@@ -85,7 +85,7 @@ func push_notification(w http.ResponseWriter, r *http.Request) {
 			tipo_notificacion = "personal"
 	}
 
-	err5 := models.SendJson(url_crud+"/v1/notificacion","POST",&response, &msg)
+	models.SendJson(url_crud+"/v1/notificacion","POST",&response, &msg)
 	// fmt.Println("err: ", err5)
 	// fmt.Println("Error para verlo: ", response)
 
