@@ -70,7 +70,7 @@ func push_notification(w http.ResponseWriter, r *http.Request) {
 
 	// Unmarshal
 	var msg models.Notificacion
-	var response models.Notificacion
+	var response interface{} //models.Notificacion
 	var tipo_notificacion string
 
 	err = json.Unmarshal(b, &msg)
@@ -85,19 +85,26 @@ func push_notification(w http.ResponseWriter, r *http.Request) {
 			tipo_notificacion = "personal"
 	}
 
+	err5 := models.SendJson(url_crud+"/v1/notificacion","POST",&response, &msg)
+	// fmt.Println("err: ", err5)
+	// fmt.Println("Error para verlo: ", response)
+
 	buf := &bytes.Buffer{}
-	err = binary.Write(buf, binary.BigEndian, msg)
+	b, err = json.Marshal(response)
+    if err != nil {
+        fmt.Printf("Error: %s", err)
+        return
+    }
+
+	err = binary.Write(buf, binary.BigEndian, &b)
 	if err != nil {
-	    panic(err)
+			panic(err)
 	}
 	mensaje := buf.Bytes()
-
 	switch tipo_notificacion {
 	case "personal":
-		models.SendJson(url_crud+"/v1/notificacion","POST",&response, &msg)
 		h.SendPersonalMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:fmt.Sprint(msg.UsuarioDestino), Profile:nil}})
 	case "profile":
-		models.SendJson(url_crud+"/v1/notificacion","POST",&response, &msg)
 		var profiles [] string
 		profiles[0] = fmt.Sprint(msg.PerfilDestino)
 		h.SendProfileMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:"", Profile:profiles}})
