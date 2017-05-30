@@ -99,15 +99,16 @@ func push_notification(w http.ResponseWriter, r *http.Request) {
 	err = binary.Write(buf, binary.BigEndian, &b)
 	if err != nil {
 			panic(err)
-	}
-	mensaje := buf.Bytes()
-	switch tipo_notificacion {
-	case "personal":
-		h.SendPersonalMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:fmt.Sprint(msg.UsuarioDestino), Profile:nil}})
-	case "profile":
-		var profiles [] string
-		profiles[0] = fmt.Sprint(msg.PerfilDestino)
-		h.SendProfileMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:"", Profile:profiles}})
+	}else{
+		mensaje := buf.Bytes()
+		switch tipo_notificacion {
+		case "personal":
+			h.SendPersonalMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:fmt.Sprint(msg.UsuarioDestino), Profile:nil}})
+		case "profile":
+			var profiles [] string
+			profiles[0] = fmt.Sprint(msg.PerfilDestino)
+			h.SendProfileMessage(models.SendingMessage{M:[]byte(mensaje), ConnValues: models.ConnValues{C:nil, Id:"", Profile:profiles}})
+		}
 	}
 
 }
