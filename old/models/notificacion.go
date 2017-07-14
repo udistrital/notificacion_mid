@@ -13,11 +13,11 @@ type NotificacionEstado struct {
 }
 
 type Aplicacion struct {
-	Id          int    `orm:"column(id);pk;auto"`
-	Nombre      string `orm:"column(nombre)"`
-	Descripcion string `orm:"column(descripcion)"`
-	Dominio     string `orm:"column(dominio)"`
-	Estado      bool   `orm:"column(estado)"`
+	Id           int    `orm:"column(id);pk;auto"`
+	Nombre       string `orm:"column(nombre)"`
+	Descripcion  string `orm:"column(descripcion)"`
+	Dominio      string `orm:"column(dominio)"`
+	Estado 		bool   `orm:"column(estado)"`
 }
 
 type Notificacion struct {
@@ -29,10 +29,4 @@ type Notificacion struct {
 	EstadoNotificacion *NotificacionEstado `orm:"column(estado_notificacion);rel(fk)"`
 	CuerpoNotificacion string              `orm:"column(cuerpo_notificacion);type(json);null"`
 	TipoNotificacion   *NotificacionTipo   `orm:"column(tipo_notificacion);rel(fk)"`
-}
-
-type Alert struct {
-	Type string
-	Code string
-	Body interface{}
 }
