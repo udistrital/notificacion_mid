@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/gorilla/websocket"
+)
 
 type NotificacionTipo struct {
 	Id     int    `orm:"column(id);pk"`
@@ -35,4 +39,10 @@ type Alert struct {
 	Type string
 	Code string
 	Body interface{}
+}
+
+type Subscriber struct {
+	Id       string
+	Profiles []string
+	Conn     *websocket.Conn // Only for WebSocket users; otherwise nil.
 }

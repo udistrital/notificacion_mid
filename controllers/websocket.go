@@ -84,7 +84,7 @@ func broadcastWebSocket(event models.Event) {
 		if ws != nil {
 			if ws.WriteMessage(websocket.TextMessage, data) != nil {
 				// User disconnected.
-				unsubscribe <- event.User
+				unsubscribe <- models.Subscriber{Id: event.User}
 			}
 		}
 	} else {
@@ -93,7 +93,7 @@ func broadcastWebSocket(event models.Event) {
 			if ws != nil {
 				if ws.WriteMessage(websocket.TextMessage, data) != nil {
 					// User disconnected.
-					unsubscribe <- event.User
+					unsubscribe <- models.Subscriber{Id: event.User}
 				}
 			}
 		}

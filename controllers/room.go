@@ -3,7 +3,6 @@ package controllers
 import (
 	"container/list"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -34,24 +33,18 @@ func newEvent(ep models.EventType, user string, msg *models.Notificacion) models
 }
 
 func Join(id string, profiles []string, ws *websocket.Conn) {
-	subscribe <- Subscriber{Id: id, Profiles: profiles, Conn: ws}
+	subscribe <- models.Subscriber{Id: id, Profiles: profiles, Conn: ws}
 }
 
 func Leave(user string) {
-	unsubscribe <- user
-}
-
-type Subscriber struct {
-	Id       string
-	Profiles []string
-	Conn     *websocket.Conn // Only for WebSocket users; otherwise nil.
+	unsubscribe <- models.Subscriber{Id: user}
 }
 
 var (
 	// Channel for new join users.
-	subscribe = make(chan Subscriber, 10)
+	subscribe = make(chan models.Subscriber, 10)
 	// Channel for exit users.
-	unsubscribe = make(chan string, 10)
+	unsubscribe = make(chan models.Subscriber, 10)
 	// Send events here to publish them.
 	publish = make(chan models.Event, 10)
 	// Long polling waiting list.
@@ -65,7 +58,7 @@ var (
 // This function handles all incoming chan messages.
 func chatroom() {
 	for {
-		fmt.Println("conn")
+
 		select {
 		case sub := <-subscribe:
 			if !isUserExist(subscribers, sub.Id) {
@@ -78,7 +71,7 @@ func chatroom() {
 						connectionsProfile[profile] = make(map[string]*websocket.Conn)
 						(connectionsProfile[profile])[sub.Id] = sub.Conn
 					}
-					fmt.Printf("Register profile: %s\n", profile)
+					beego.Info("Register profile:", profile)
 				}
 				// Publish a JOIN event.
 				//publish <- newEvent(models.EVENT_JOIN, sub.Name, "")
@@ -103,20 +96,21 @@ func chatroom() {
 
 		case unsub := <-unsubscribe:
 			for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
-				if sub.Value.(Subscriber).Id == unsub {
+				if sub.Value.(models.Subscriber).Id == unsub.Id {
 					subscribers.Remove(sub)
-					delete(connectionsId, unsub)
-					for _, prof := range sub.Value.(Subscriber).Profiles {
-						delete(connectionsProfile[prof], unsub)
+					delete(connectionsId, unsub.Id)
+					for _, prof := range sub.Value.(models.Subscriber).Profiles {
+						delete(connectionsProfile[prof], unsub.Id)
 					}
 
 					// Clone connection.
-					ws := sub.Value.(Subscriber).Conn
+					ws := sub.Value.(models.Subscriber).Conn
 					if ws != nil {
 						ws.Close()
-						beego.Error("WebSocket closed:", unsub)
+						publish <- newEvent(models.EVENT_LEAVE, unsub.Id, &models.Notificacion{})
+						beego.Error("WebSocket closed:", unsub.Id)
 					}
-					//publish <- newEvent(models.EVENT_LEAVE, unsub, &models.Notificacion{}) // Publish a LEAVE event.
+					publish <- newEvent(models.EVENT_LEAVE, unsub.Id, &models.Notificacion{}) // Publish a LEAVE event.
 					break
 				}
 			}
@@ -131,7 +125,7 @@ func init() {
 
 func isUserExist(subscribers *list.List, user string) bool {
 	for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
-		if sub.Value.(Subscriber).Id == user {
+		if sub.Value.(models.Subscriber).Id == user {
 			return true
 		}
 	}
