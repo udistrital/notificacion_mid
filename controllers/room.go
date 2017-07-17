@@ -42,11 +42,11 @@ func Leave(user string) {
 
 var (
 	// Channel for new join users.
-	subscribe = make(chan models.Subscriber, 10)
+	subscribe = make(chan models.Subscriber)
 	// Channel for exit users.
-	unsubscribe = make(chan models.Subscriber, 10)
+	unsubscribe = make(chan models.Subscriber)
 	// Send events here to publish them.
-	publish = make(chan models.Event, 10)
+	publish = make(chan models.Event)
 	// Long polling waiting list.
 	waitingList = list.New()
 	subscribers = list.New()

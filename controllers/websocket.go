@@ -52,6 +52,7 @@ func (this *WebsocketController) Join() {
 	}
 
 	// Join chat room.
+	fmt.Println(UserId)
 	Join(UserId, Profiles, ws)
 	fmt.Println("Pasa Join")
 	defer Leave(UserId)
