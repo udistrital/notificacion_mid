@@ -52,10 +52,10 @@ func (this *WebsocketController) Join() {
 	}
 
 	// Join chat room.
-	fmt.Println(UserId)
+	//fmt.Println(UserId)
 	Join(UserId, Profiles, ws)
-	fmt.Println("Pasa Join")
-	defer Leave(UserId)
+	//fmt.Println("Pasa Join")
+	//defer Leave(UserId)
 
 	// Message receive loop.
 	/*for {
@@ -70,7 +70,7 @@ func (this *WebsocketController) Join() {
 // broadcastWebSocket broadcasts messages to WebSocket users.
 func broadcastWebSocket(event models.Event) {
 	var response models.Notificacion
-	models.SendJson("10.20.0.254/configuracion_api/v1/notificacion", "POST", &response, &event.Content)
+	models.SendJson("http://10.20.0.254/configuracion_api/v1/notificacion", "POST", &response, &event.Content)
 	data, err := json.Marshal(&response)
 	if err != nil {
 		beego.Error("Fail to marshal event:", err)
@@ -85,7 +85,7 @@ func broadcastWebSocket(event models.Event) {
 		if ws != nil {
 			if ws.WriteMessage(websocket.TextMessage, data) != nil {
 				// User disconnected.
-				unsubscribe <- models.Subscriber{Id: event.User}
+				unsubscribe <- event.User
 			}
 		}
 	} else {
@@ -94,7 +94,7 @@ func broadcastWebSocket(event models.Event) {
 			if ws != nil {
 				if ws.WriteMessage(websocket.TextMessage, data) != nil {
 					// User disconnected.
-					unsubscribe <- models.Subscriber{Id: event.User}
+					unsubscribe <- event.User
 				}
 			}
 		}
@@ -113,7 +113,20 @@ func broadcastWebSocket(event models.Event) {
 // @Failure 403 body is empty
 // @router / [post]
 func (c *WebsocketController) Post() {
-
+	var v models.Notificacion
+	UserId := c.GetString("id")
+	//fmt.Println("Id ", UserId)
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &v); err == nil {
+		//push notificacion-------
+		publish <- newEvent(models.EVENT_MESSAGE, UserId, &v)
+		c.Ctx.Output.SetStatus(201)
+		alert := models.Alert{Type: "success", Code: "S_544", Body: v}
+		c.Data["json"] = alert
+	} else {
+		alert := models.Alert{Type: "success", Code: "E_N001", Body: err.Error()}
+		c.Data["json"] = alert
+	}
+	c.ServeJSON()
 }
 
 // GetOne ...

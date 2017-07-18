@@ -3,6 +3,7 @@ package controllers
 import (
 	"container/list"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -33,20 +34,23 @@ func newEvent(ep models.EventType, user string, msg *models.Notificacion) models
 }
 
 func Join(id string, profiles []string, ws *websocket.Conn) {
-	subscribe <- models.Subscriber{Id: id, Profiles: profiles, Conn: ws}
+	fmt.Println("join")
+	s := models.Subscriber{Id: id, Profiles: profiles, Conn: ws}
+	fmt.Println(s)
+	subscribe <- s
 }
 
 func Leave(user string) {
-	unsubscribe <- models.Subscriber{Id: user}
+	unsubscribe <- user
 }
 
 var (
 	// Channel for new join users.
-	subscribe = make(chan models.Subscriber)
+	subscribe = make(chan models.Subscriber, 10)
 	// Channel for exit users.
-	unsubscribe = make(chan models.Subscriber)
+	unsubscribe = make(chan string, 10)
 	// Send events here to publish them.
-	publish = make(chan models.Event)
+	publish = make(chan models.Event, 10)
 	// Long polling waiting list.
 	waitingList = list.New()
 	subscribers = list.New()
@@ -61,9 +65,10 @@ func chatroom() {
 
 		select {
 		case sub := <-subscribe:
+			fmt.Println("nuevo ", sub)
 			if !isUserExist(subscribers, sub.Id) {
 				subscribers.PushBack(sub) // Add user to the end of list.
-				connectionsId[sub.Id] = sub.Conn
+				/*connectionsId[sub.Id] = sub.Conn
 				for _, profile := range sub.Profiles {
 					if _, ok := connectionsProfile[profile]; ok {
 						(connectionsProfile[profile])[sub.Id] = sub.Conn
@@ -72,7 +77,7 @@ func chatroom() {
 						(connectionsProfile[profile])[sub.Id] = sub.Conn
 					}
 					beego.Info("Register profile:", profile)
-				}
+				}*/
 				// Publish a JOIN event.
 				//publish <- newEvent(models.EVENT_JOIN, sub.Name, "")
 				beego.Info("New user:", sub.Id, ";WebSocket:", sub.Conn != nil)
@@ -82,10 +87,10 @@ func chatroom() {
 
 		case event := <-publish:
 			// Notify waiting list.
-			for ch := waitingList.Back(); ch != nil; ch = ch.Prev() {
+			/*for ch := waitingList.Back(); ch != nil; ch = ch.Prev() {
 				ch.Value.(chan bool) <- true
 				waitingList.Remove(ch)
-			}
+			}*/
 
 			broadcastWebSocket(event)
 			models.NewArchive(event)
@@ -96,21 +101,21 @@ func chatroom() {
 
 		case unsub := <-unsubscribe:
 			for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
-				if sub.Value.(models.Subscriber).Id == unsub.Id {
+				if sub.Value.(models.Subscriber).Id == unsub {
 					subscribers.Remove(sub)
-					delete(connectionsId, unsub.Id)
+					/*delete(connectionsId, unsub)
 					for _, prof := range sub.Value.(models.Subscriber).Profiles {
-						delete(connectionsProfile[prof], unsub.Id)
-					}
+						delete(connectionsProfile[prof], unsub)
+					}*/
 
 					// Clone connection.
 					ws := sub.Value.(models.Subscriber).Conn
 					if ws != nil {
 						ws.Close()
-						publish <- newEvent(models.EVENT_LEAVE, unsub.Id, &models.Notificacion{})
-						beego.Error("WebSocket closed:", unsub.Id)
+						publish <- newEvent(models.EVENT_LEAVE, unsub, &models.Notificacion{})
+						beego.Error("WebSocket closed:", unsub)
 					}
-					publish <- newEvent(models.EVENT_LEAVE, unsub.Id, &models.Notificacion{}) // Publish a LEAVE event.
+					//publish <- newEvent(models.EVENT_LEAVE, unsub.Id, &models.Notificacion{}) // Publish a LEAVE event.
 					break
 				}
 			}
