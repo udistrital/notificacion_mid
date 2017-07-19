@@ -15,8 +15,8 @@ type Subscription struct {
 	New     <-chan models.Event // New events coming in.
 }
 
-func newEvent(ep models.EventType, user, msg string) models.Event {
-	return models.Event{ep, user, int(time.Now().Unix()), msg}
+func newEvent(ep models.EventType, user string, profiles []string, msg string) models.Event {
+	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg}
 }
 
 func Join(user string, profiles []string, ws *websocket.Conn) {
@@ -66,9 +66,10 @@ func chatroom() {
 					beego.Info("Register profile:", profile)
 				}
 				// Publish a JOIN event.
-				publish <- newEvent(models.EVENT_JOIN, sub.Name, "Se unio al ws")
+				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, sub.Profiles, "Se unio al ws")
 				beego.Info("New user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			} else {
+				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, sub.Profiles, "reload") // Publish a LEAVE event.
 				beego.Info("Old user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			}
 		case event := <-publish:
@@ -90,7 +91,7 @@ func chatroom() {
 						ws.Close()
 						beego.Error("WebSocket closed:", unsub)
 					}
-					publish <- newEvent(models.EVENT_LEAVE, unsub, "logout") // Publish a LEAVE event.
+					publish <- newEvent(models.EVENT_LEAVE, unsub, nil, "logout") // Publish a LEAVE event.
 					break
 				}
 			}

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -47,7 +48,7 @@ func (this *WebSocketController) Join() {
 		if err != nil {
 			return
 		}
-		publish <- newEvent(models.EVENT_MESSAGE, Id, string(p))
+		publish <- newEvent(models.EVENT_MESSAGE, Id, Profiles, string(p))
 	}
 }
 
@@ -58,15 +59,26 @@ func broadcastWebSocket(event models.Event) {
 		beego.Error("Fail to marshal event:", err)
 		return
 	}
-
-	for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
-		// Immediately send event to WebSocket users.
-		ws := sub.Value.(Subscriber).Conn
+	if connectionsId[event.User] != nil {
+		ws := connectionsId[event.User]
 		if ws != nil {
 			if ws.WriteMessage(websocket.TextMessage, data) != nil {
 				// User disconnected.
-				unsubscribe <- sub.Value.(Subscriber).Name
+				unsubscribe <- event.User
 			}
 		}
 	}
+	for _, value := range event.Profiles {
+		fmt.Println("message from ", event.User)
+		if connectionsProfile[value][event.User] != nil {
+			ws := connectionsProfile[value][event.User]
+			if ws != nil {
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					// User disconnected.
+					unsubscribe <- event.User
+				}
+			}
+		}
+	}
+
 }

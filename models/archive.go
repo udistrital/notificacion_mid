@@ -36,6 +36,7 @@ type BaseController struct {
 type Event struct {
 	Type      EventType // JOIN, LEAVE, MESSAGE
 	User      string
+	Profiles  []string
 	Timestamp int // Unix timestamp (secs)
 	Content   string
 }
