@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
 	"github.com/udistrital/notificacion_api/models"
+	"github.com/udistrital/notificacion_api/utilidades"
 )
 
 // WebSocketController handles WebSocket requests.
@@ -70,15 +72,43 @@ func broadcastWebSocket(event models.Event) {
 	}
 	for _, value := range event.Profiles {
 		fmt.Println("message from ", event.User)
-		if connectionsProfile[value][event.User] != nil {
-			ws := connectionsProfile[value][event.User]
-			if ws != nil {
-				if ws.WriteMessage(websocket.TextMessage, data) != nil {
-					// User disconnected.
-					unsubscribe <- event.User
+		if connectionsProfile[value] != nil {
+			for _, con := range connectionsProfile[value] {
+				ws := con
+				if ws != nil {
+					if ws.WriteMessage(websocket.TextMessage, data) != nil {
+						// User disconnected.
+						unsubscribe <- event.User
+					}
 				}
 			}
+
 		}
 	}
 
+}
+
+// broadcastWebSocket broadcasts messages to WebSocket users
+func (this *WebSocketController) PushNotificacion() {
+	fmt.Println("entro")
+	var v map[string]interface{}
+	//UserId := c.GetString("id")
+	//fmt.Println("Id ", UserId)
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &v); err == nil {
+		//push notificacion-------
+		var perfil int64
+		var usuario int64
+		var cuerpo string
+		err = utilidades.FillStruct(v["PerfilDestino"], &perfil)
+		err = utilidades.FillStruct(v["UsuarioDestino"], &usuario)
+		err = utilidades.FillStruct(v["CuerpoNotificacion"], &cuerpo)
+		publish <- newEvent(models.EVENT_MESSAGE, strconv.FormatInt(usuario, 10), strings.Split(strconv.FormatInt(perfil, 10), ","), cuerpo)
+		this.Ctx.Output.SetStatus(201)
+		alert := models.Alert{Type: "success", Code: "S_544", Body: v}
+		this.Data["json"] = alert
+	} else {
+		alert := models.Alert{Type: "error", Code: "E_N001", Body: err.Error()}
+		this.Data["json"] = alert
+	}
+	this.ServeJSON()
 }

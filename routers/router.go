@@ -17,7 +17,8 @@ func init() {
 	beego.Router("/lp/fetch", &controllers.LongPollingController{}, "get:Fetch")*/
 
 	// WebSocket.
-	beego.Router("/ws", &controllers.WebSocketController{})
+	//beego.Router("/ws", &controllers.WebSocketController{})
 	beego.Router("/ws/join", &controllers.WebSocketController{}, "get:Join")
+	beego.Router("/ws", &controllers.WebSocketController{}, "post:PushNotificacion")
 
 }
