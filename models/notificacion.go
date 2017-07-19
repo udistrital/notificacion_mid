@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 type NotificacionTipo struct {
@@ -41,8 +39,8 @@ type Alert struct {
 	Body interface{}
 }
 
-type Subscriber struct {
+/*type Subscriber struct {
 	Id       string
 	Profiles []string
 	Conn     *websocket.Conn // Only for WebSocket users; otherwise nil.
-}
+}*/
