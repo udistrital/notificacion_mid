@@ -20,5 +20,8 @@ func init() {
 	//beego.Router("/ws", &controllers.WebSocketController{})
 	beego.Router("/ws/join", &controllers.WebSocketController{}, "get:Join")
 	beego.Router("/ws", &controllers.WebSocketController{}, "post:PushNotificacion")
-
+	//send notification via api
+	//beego.Router("/notify", &controllers.WebSocketController{}, "post:PushNotificacion")
+	beego.Router("/api/notify", &controllers.WebSocketController{}, "post:PushNotificacion")
+	beego.Router("/api/notify", &controllers.WebSocketController{}, "get:PushNotificacionDb")
 }

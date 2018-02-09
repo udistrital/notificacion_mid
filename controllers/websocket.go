@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
+	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
@@ -50,7 +50,9 @@ func (this *WebSocketController) Join() {
 		if err != nil {
 			return
 		}
-		publish <- newEvent(models.EVENT_MESSAGE, Id, Profiles, string(p))
+		var m map[string]interface{}
+		err = json.Unmarshal(p, &m)
+		publish <- newEvent(models.EVENT_MESSAGE, Id, Profiles, m, time.Now().Local())
 	}
 }
 
@@ -92,19 +94,54 @@ func broadcastWebSocket(event models.Event) {
 func (this *WebSocketController) PushNotificacion() {
 	fmt.Println("entro")
 	var v map[string]interface{}
+	var res interface{}
 	//UserId := c.GetString("id")
 	//fmt.Println("Id ", UserId)
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &v); err == nil {
 		//push notificacion-------
-		var perfil int64
-		var usuario int64
-		var cuerpo string
-		err = utilidades.FillStruct(v["PerfilDestino"], &perfil)
-		err = utilidades.FillStruct(v["UsuarioDestino"], &usuario)
-		err = utilidades.FillStruct(v["CuerpoNotificacion"], &cuerpo)
-		publish <- newEvent(models.EVENT_MESSAGE, strconv.FormatInt(usuario, 10), strings.Split(strconv.FormatInt(perfil, 10), ","), cuerpo)
+		beego.Info("Data ", v)
+		var perfil []string
+		var usuario string
+		var cuerpo map[string]interface{}
+		err = utilidades.FillStruct(v["DestinationProfiles"], &perfil)
+		err = utilidades.FillStruct(v["Application"], &usuario)
+		err = utilidades.FillStruct(v["NotificationBody"], &cuerpo)
+		publish <- newEvent(models.EVENT_MESSAGE, usuario, perfil, cuerpo, time.Now().Local())
+		j, _ := json.Marshal(cuerpo)
+		data := map[string]interface{}{"CuerpoNotificacion": string(j), "EstadoNotificacion": map[string]interface{}{"Id": 1}, "NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
+		utilidades.SendJson("http://localhost:8082/v1/notificacion", "POST", &res, data)
 		this.Ctx.Output.SetStatus(201)
 		alert := models.Alert{Type: "success", Code: "S_544", Body: v}
+		this.Data["json"] = alert
+	} else {
+		alert := models.Alert{Type: "error", Code: "E_N001", Body: err.Error()}
+		this.Data["json"] = alert
+	}
+	this.ServeJSON()
+}
+
+// broadcastWebSocket broadcasts messages to WebSocket users from db
+func (this *WebSocketController) PushNotificacionDb() {
+	fmt.Println("entro")
+	var m []models.Notificacion
+	query := this.GetString("query")
+	//fmt.Println("Id ", UserId)
+	if err := utilidades.GetJson("http://localhost:8082/v1/notificacion?query="+query, &m); err == nil {
+		for _, v := range m {
+			//push notificacion-------
+			beego.Info("Data ", v)
+			var perfil []string
+			var usuario string
+			var cuerpo map[string]interface{}
+			for _, profiledata := range v.NotificacionConfiguracion.NotificacionConfiguracionPerfil {
+				perfil = append(perfil, profiledata.Perfil.Nombre)
+			}
+			usuario = v.NotificacionConfiguracion.Aplicacion.Nombre
+			err = json.Unmarshal([]byte(v.CuerpoNotificacion), &cuerpo)
+			publish <- newEvent(models.EVENT_MESSAGE, usuario, perfil, cuerpo, v.FechaCreacion)
+		}
+		this.Ctx.Output.SetStatus(201)
+		alert := models.Alert{Type: "success", Code: "S_544", Body: m}
 		this.Data["json"] = alert
 	} else {
 		alert := models.Alert{Type: "error", Code: "E_N001", Body: err.Error()}

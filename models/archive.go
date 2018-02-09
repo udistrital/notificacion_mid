@@ -16,6 +16,7 @@ package models
 
 import (
 	"container/list"
+	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/beego/i18n"
@@ -34,11 +35,12 @@ type BaseController struct {
 	i18n.Locale      // For i18n usage when process data and render template.
 }
 type Event struct {
-	Type      EventType // JOIN, LEAVE, MESSAGE
-	User      string
-	Profiles  []string
-	Timestamp int // Unix timestamp (secs)
-	Content   string
+	Type          EventType // JOIN, LEAVE, MESSAGE
+	User          string
+	Profiles      []string
+	Timestamp     int // Unix timestamp (secs)
+	Content       map[string]interface{}
+	FechaCreacion time.Time
 }
 
 const archiveSize = 20
