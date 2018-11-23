@@ -35,12 +35,13 @@ type BaseController struct {
 	i18n.Locale      // For i18n usage when process data and render template.
 }
 type Event struct {
-	Type          EventType // JOIN, LEAVE, MESSAGE
-	User          string
-	Profiles      []string
-	Timestamp     int // Unix timestamp (secs)
-	Content       map[string]interface{}
-	FechaCreacion time.Time
+	Type            EventType // JOIN, LEAVE, MESSAGE
+	User            string
+	Profiles        []string
+	Timestamp       int // Unix timestamp (secs)
+	Content         map[string]interface{}
+	FechaCreacion   time.Time
+	UserDestination []string
 }
 
 const archiveSize = 20

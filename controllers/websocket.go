@@ -52,7 +52,7 @@ func (this *WebSocketController) Join() {
 		}
 		var m map[string]interface{}
 		err = json.Unmarshal(p, &m)
-		publish <- newEvent(models.EVENT_MESSAGE, Id, Profiles, m, time.Now().Local())
+		publish <- newEvent(models.EVENT_MESSAGE, Id, nil, Profiles, m, time.Now().Local())
 	}
 }
 
@@ -63,15 +63,18 @@ func broadcastWebSocket(event models.Event) {
 		beego.Error("Fail to marshal event:", err)
 		return
 	}
-	if connectionsId[event.User] != nil {
-		ws := connectionsId[event.User]
-		if ws != nil {
-			if ws.WriteMessage(websocket.TextMessage, data) != nil {
-				// User disconnected.
-				unsubscribe <- event.User
+	for _, user := range event.UserDestination {
+		if connectionsId[user] != nil {
+			ws := connectionsId[user]
+			if ws != nil {
+				if ws.WriteMessage(websocket.TextMessage, data) != nil {
+					// User disconnected.
+					unsubscribe <- event.User
+				}
 			}
 		}
 	}
+
 	for _, value := range event.Profiles {
 		fmt.Println("message from ", event.User)
 		if connectionsProfile[value] != nil {
@@ -102,11 +105,13 @@ func (this *WebSocketController) PushNotificacion() {
 		beego.Info("Data ", v)
 		var perfil []string
 		var usuario string
+		var usuarioDestino []string
 		var cuerpo map[string]interface{}
 		err = utilidades.FillStruct(v["DestinationProfiles"], &perfil)
 		err = utilidades.FillStruct(v["Application"], &usuario)
 		err = utilidades.FillStruct(v["NotificationBody"], &cuerpo)
-		publish <- newEvent(models.EVENT_MESSAGE, usuario, perfil, cuerpo, time.Now().Local())
+		err = utilidades.FillStruct(v["UserDestination"], &usuarioDestino)
+		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local())
 		j, _ := json.Marshal(cuerpo)
 		data := map[string]interface{}{"CuerpoNotificacion": string(j), "EstadoNotificacion": map[string]interface{}{"Id": 1}, "NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
 		utilidades.SendJson("http://localhost:8082/v1/notificacion", "POST", &res, data)
@@ -138,7 +143,7 @@ func (this *WebSocketController) PushNotificacionDb() {
 			}
 			usuario = v.NotificacionConfiguracion.Aplicacion.Nombre
 			err = json.Unmarshal([]byte(v.CuerpoNotificacion), &cuerpo)
-			publish <- newEvent(models.EVENT_MESSAGE, usuario, perfil, cuerpo, v.FechaCreacion)
+			publish <- newEvent(models.EVENT_MESSAGE, usuario, nil, perfil, cuerpo, v.FechaCreacion)
 		}
 		this.Ctx.Output.SetStatus(201)
 		alert := models.Alert{Type: "success", Code: "S_544", Body: m}
