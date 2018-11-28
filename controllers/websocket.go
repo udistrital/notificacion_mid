@@ -113,7 +113,11 @@ func (this *WebSocketController) PushNotificacion() {
 		err = utilidades.FillStruct(v["UserDestination"], &usuarioDestino)
 		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local())
 		j, _ := json.Marshal(cuerpo)
-		data := map[string]interface{}{"CuerpoNotificacion": string(j), "EstadoNotificacion": map[string]interface{}{"Id": 1}, "NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
+		data := map[string]interface{}{
+			"Usuario":                   usuario,
+			"CuerpoNotificacion":        string(j),
+			"EstadoNotificacion":        map[string]interface{}{"Id": 1},
+			"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
 		utilidades.SendJson("http://localhost:8082/v1/notificacion", "POST", &res, data)
 		this.Ctx.Output.SetStatus(201)
 		alert := models.Alert{Type: "success", Code: "S_544", Body: v}
