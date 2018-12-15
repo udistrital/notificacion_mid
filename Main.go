@@ -17,19 +17,19 @@ package main
 
 import (
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/plugins/cors"
 	_ "github.com/udistrital/notificacion_api/routers"
-)
-
-const (
-	APP_VER = "2"
+	"github.com/udistrital/utils_oas/apiStatusLib"
 )
 
 func main() {
-	beego.Info(beego.BConfig.AppName, APP_VER)
 
-	// Register template functions.
-	//beego.AddFuncMap("i18n", i18n.Tr)
+	if beego.BConfig.RunMode == "dev" {
+		beego.BConfig.WebConfig.DirectoryIndex = true
+		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
+	}
+
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{"PUT", "PATCH", "GET", "POST", "OPTIONS", "DELETE"},
@@ -42,5 +42,12 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
+
+	logPath := "{\"filename\":\""
+	logPath += beego.AppConfig.String("logPath")
+	logPath += "\"}"
+	logs.SetLogger(logs.AdapterFile, logPath)
+
+	apistatus.Init()
 	beego.Run()
 }

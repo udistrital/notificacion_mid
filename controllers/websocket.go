@@ -118,7 +118,7 @@ func (this *WebSocketController) PushNotificacion() {
 			"CuerpoNotificacion":        string(j),
 			"EstadoNotificacion":        map[string]interface{}{"Id": 1},
 			"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
-		utilidades.SendJson("http://localhost:8082/v1/notificacion", "POST", &res, data)
+		utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"/notificacion", "POST", &res, data)
 		this.Ctx.Output.SetStatus(201)
 		alert := models.Alert{Type: "success", Code: "S_544", Body: v}
 		this.Data["json"] = alert
@@ -135,7 +135,7 @@ func (this *WebSocketController) PushNotificacionDb() {
 	var m []models.Notificacion
 	query := this.GetString("query")
 	//fmt.Println("Id ", UserId)
-	if err := utilidades.GetJson("http://localhost:8082/v1/notificacion?query="+query, &m); err == nil {
+	if err := utilidades.GetJson(beego.AppConfig.String("configuracionUrl")+"/notificacion?query="+query, &m); err == nil {
 		for _, v := range m {
 			//push notificacion-------
 			beego.Info("Data ", v)

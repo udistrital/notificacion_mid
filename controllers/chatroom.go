@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"container/list"
-	"fmt"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -19,6 +18,15 @@ func newEvent(ep models.EventType, user string, userDestination []string, profil
 	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg, date, userDestination}
 }
 
+// Join ...
+// @Title Join
+// @Description Join to webSocket notification
+// @Param	user		path 	string	true		"user from autentication"
+// @Param	profiles		path 	string	true		"users profiles"
+// @Success 200 {object} :user profiles conected
+// @Failure 403 :profiles is empty
+// @Failure 403 :user is empty
+// @router /:user/:profiles [get]
 func Join(user string, profiles []string, ws *websocket.Conn) {
 	subscribe <- Subscriber{Name: user, Profiles: profiles, Conn: ws}
 }
@@ -55,7 +63,6 @@ func chatroom() {
 			if !isUserExist(subscribers, sub.Name) {
 				subscribers.PushBack(sub) // Add user to the end of list.
 				connectionsId[sub.Name] = sub.Conn
-				fmt.Println(connectionsId)
 				for _, profile := range sub.Profiles {
 					if _, ok := connectionsProfile[profile]; ok {
 						(connectionsProfile[profile])[sub.Name] = sub.Conn
