@@ -113,15 +113,30 @@ func (this *WebSocketController) PushNotificacion() {
 		err = utilidades.FillStruct(v["UserDestination"], &usuarioDestino)
 		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local())
 		j, _ := json.Marshal(cuerpo)
-		data := map[string]interface{}{
-			"Usuario":                   usuario,
-			"CuerpoNotificacion":        string(j),
-			"EstadoNotificacion":        map[string]interface{}{"Id": 1},
-			"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
-		utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"/notificacion", "POST", &res, data)
-		this.Ctx.Output.SetStatus(201)
-		alert := models.Alert{Type: "success", Code: "S_544", Body: v}
-		this.Data["json"] = alert
+		if v["UserDestination"] == "" {
+			data := map[string]interface{}{
+				"Usuario":                   usuarioDestino,
+				"CuerpoNotificacion":        string(j),
+				"EstadoNotificacion":        map[string]interface{}{"Id": 1},
+				"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
+			utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"/notificacion", "POST", &res, data)
+			this.Ctx.Output.SetStatus(201)
+			alert := models.Alert{Type: "success", Code: "S_544", Body: v}
+			this.Data["json"] = alert
+		} else {
+			for _, user := range usuarioDestino {
+				data := map[string]interface{}{
+					"Usuario":                   user,
+					"CuerpoNotificacion":        string(j),
+					"EstadoNotificacion":        map[string]interface{}{"Id": 1},
+					"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
+				utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"/notificacion", "POST", &res, data)
+				this.Ctx.Output.SetStatus(201)
+				alert := models.Alert{Type: "success", Code: "S_544", Body: v}
+				this.Data["json"] = alert
+			}
+		}
+
 	} else {
 		alert := models.Alert{Type: "error", Code: "E_N001", Body: err.Error()}
 		this.Data["json"] = alert
