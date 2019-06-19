@@ -115,7 +115,6 @@ func (this *WebSocketController) PushNotificacion() {
 		j, _ := json.Marshal(cuerpo)
 		if v["UserDestination"] == "" {
 			data := map[string]interface{}{
-				"Usuario":                   usuarioDestino,
 				"CuerpoNotificacion":        string(j),
 				"EstadoNotificacion":        map[string]interface{}{"Id": 1},
 				"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
@@ -125,19 +124,22 @@ func (this *WebSocketController) PushNotificacion() {
 			alert := models.Alert{Type: "success", Code: "S_544", Body: v}
 			this.Data["json"] = alert
 		} else {
-			for _, user := range usuarioDestino {
-				data := map[string]interface{}{
-					"Usuario":                   user,
-					"CuerpoNotificacion":        string(j),
-					"EstadoNotificacion":        map[string]interface{}{"Id": 1},
-					"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
-				utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"/notificacion", "POST", &res, data)
-				this.Ctx.Output.SetStatus(201)
-				alert := models.Alert{Type: "success", Code: "S_544", Body: v}
-				this.Data["json"] = alert
-			}
-		}
 
+			data := map[string]interface{}{
+				"CuerpoNotificacion":        string(j),
+				"EstadoNotificacion":        map[string]interface{}{"Id": 1},
+				"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
+
+			notificacion := map[string]interface{}{
+				"Notificacion": data,
+				"Usuarios":     v["UserDestination"]}
+
+			utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"notificacion_estado_usuario/pushNotificationUser", "POST", &res, notificacion)
+			beego.Info(beego.AppConfig.String("configuracionUrl") + "notificacion_estado_usuario/pushNotificationUser")
+			this.Ctx.Output.SetStatus(201)
+			alert := models.Alert{Type: "success", Code: "S_544", Body: notificacion}
+			this.Data["json"] = alert
+		}
 	} else {
 		alert := models.Alert{Type: "error", Code: "E_N001", Body: err.Error()}
 		this.Data["json"] = alert
@@ -151,7 +153,7 @@ func (this *WebSocketController) PushNotificacionDb() {
 	var m []models.Notificacion
 	query := this.GetString("query")
 	//fmt.Println("Id ", UserId)
-	if err := utilidades.GetJson(beego.AppConfig.String("configuracionUrl")+"/notificacion?query="+query, &m); err == nil {
+	if err := utilidades.GetJson(beego.AppConfig.String("configuracionUrl")+"/notificacion/?query="+query, &m); err == nil {
 		for _, v := range m {
 			//push notificacion-------
 			beego.Info("Data ", v)

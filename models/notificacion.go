@@ -19,7 +19,7 @@ type NotificacionConfiguracion struct {
 	EndPoint                        string                             `orm:"column(end_point)"`
 	MetodoHttp                      *MetodoHttp                        `orm:"column(metodo_http);rel(fk)"`
 	Tipo                            *NotificacionTipo                  `orm:"column(tipo);rel(fk)"`
-	CuerpoNotificacion              string                             `orm:"column(cuerpo_notificacion);type(json)"`
+	CuerpoNotificacion              string                             `orm:"column(cuerpo_notificacion);type(string)"`
 	Aplicacion                      *Aplicacion                        `orm:"column(aplicacion);rel(fk)"`
 	NotificacionConfiguracionPerfil []*NotificacionConfiguracionPerfil `orm:"reverse(many)"`
 }
@@ -34,8 +34,12 @@ type NotificacionTipo struct {
 }
 
 type NotificacionEstado struct {
-	Id     int    `orm:"column(id);pk"`
-	Nombre string `orm:"column(nombre);null"`
+	Id                int     `orm:"column(id);pk;auto"`
+	Nombre            string  `orm:"column(nombre);null"`
+	Activo            bool    `orm:"column(activo)"`
+	Descripcion       string  `orm:"column(descripcion);null"`
+	CodigoAbreviacion string  `orm:"column(codigo_abreviacion);null"`
+	NumeroOrden       float64 `orm:"column(numero_orden);null"`
 }
 
 type Aplicacion struct {
@@ -45,7 +49,6 @@ type Aplicacion struct {
 	Dominio     string `orm:"column(dominio)"`
 	Estado      bool   `orm:"column(estado)"`
 }
-
 type Notificacion struct {
 	Id                        int                        `orm:"column(id);pk;auto"`
 	FechaCreacion             time.Time                  `orm:"column(fecha_creacion);type(timestamp with time zone);auto_now_add"`
@@ -54,15 +57,12 @@ type Notificacion struct {
 	NotificacionConfiguracion *NotificacionConfiguracion `orm:"column(notificacion_configuracion);rel(fk)"`
 	Usuario                   string                     `orm:"column(usuario);`
 }
-
 type Alert struct {
 	Type string
 	Code string
 	Body interface{}
 }
-
-/*type Subscriber struct {
-	Id       string
-	Profiles []string
-	Conn     *websocket.Conn // Only for WebSocket users; otherwise nil.
-}*/
+type NotificacionUsuarioMasiva struct {
+	Notificacion *Notificacion
+	Usuarios     []string
+}

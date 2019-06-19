@@ -2,11 +2,13 @@ package controllers
 
 import (
 	"container/list"
+	"strings"
 	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
 	"github.com/udistrital/notificacion_api/models"
+	"github.com/udistrital/notificacion_api/utilidades"
 )
 
 type Subscription struct {
@@ -28,6 +30,8 @@ func newEvent(ep models.EventType, user string, userDestination []string, profil
 // @Failure 403 :user is empty
 // @router /:user/:profiles [get]
 func Join(user string, profiles []string, ws *websocket.Conn) {
+	var m []models.Notificacion
+	utilidades.GetJson(beego.AppConfig.String("configuracionUrl")+"notificacion_estado_usuario/getOldNotification/"+strings.Join(profiles, ",")+"/"+user, &m)
 	subscribe <- Subscriber{Name: user, Profiles: profiles, Conn: ws}
 }
 
@@ -79,6 +83,7 @@ func chatroom() {
 				//publish <- newEvent(models.EVENT_MESSAGE, sub.Name, sub.Profiles, "reload") // Publish a LEAVE event. remove this message for prodct.
 				beego.Info("Old user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			}
+
 		case event := <-publish:
 
 			broadcastWebSocket(event)
