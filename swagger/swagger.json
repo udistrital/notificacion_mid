@@ -3,11 +3,5 @@
     "info": {
         "contact": {}
     },
-    "paths": null,
-    "definitions": {
-        "user": {
-            "title": "user",
-            "type": "object"
-        }
-    }
+    "paths": null
 }

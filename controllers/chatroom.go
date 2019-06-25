@@ -16,8 +16,8 @@ type Subscription struct {
 	New     <-chan models.Event // New events coming in.
 }
 
-func newEvent(ep models.EventType, user string, userDestination []string, profiles []string, msg map[string]interface{}, date time.Time) models.Event {
-	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg, date, userDestination}
+func newEvent(ep models.EventType, user string, userDestination []string, profiles []string, msg map[string]interface{}, date time.Time, alias string, estiloicono string) models.Event {
+	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg, date, userDestination, alias, estiloicono}
 }
 
 // Join ...

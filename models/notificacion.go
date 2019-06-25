@@ -52,10 +52,8 @@ type Aplicacion struct {
 type Notificacion struct {
 	Id                        int                        `orm:"column(id);pk;auto"`
 	FechaCreacion             time.Time                  `orm:"column(fecha_creacion);type(timestamp with time zone);auto_now_add"`
-	EstadoNotificacion        *NotificacionEstado        `orm:"column(estado_notificacion);rel(fk)"`
 	CuerpoNotificacion        string                     `orm:"column(cuerpo_notificacion);type(json);null"`
 	NotificacionConfiguracion *NotificacionConfiguracion `orm:"column(notificacion_configuracion);rel(fk)"`
-	Usuario                   string                     `orm:"column(usuario);`
 }
 type Alert struct {
 	Type string

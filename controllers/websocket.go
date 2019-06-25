@@ -52,7 +52,7 @@ func (this *WebSocketController) Join() {
 		}
 		var m map[string]interface{}
 		err = json.Unmarshal(p, &m)
-		publish <- newEvent(models.EVENT_MESSAGE, Id, nil, Profiles, m, time.Now().Local())
+		//publish <- newEvent(models.EVENT_MESSAGE, Id, nil, Profiles, m, time.Now().Local(),)
 	}
 }
 
@@ -78,8 +78,10 @@ func broadcastWebSocket(event models.Event) {
 	for _, value := range event.Profiles {
 		fmt.Println("message from ", event.User)
 		if connectionsProfile[value] != nil {
-			for _, con := range connectionsProfile[value] {
+			for user, con := range connectionsProfile[value] {
 				ws := con
+				var m []models.Notificacion
+				utilidades.GetJson(beego.AppConfig.String("configuracionUrl")+"notificacion_estado_usuario/getOldNotification/"+value+"/"+user, &m)
 				if ws != nil {
 					if ws.WriteMessage(websocket.TextMessage, data) != nil {
 						// User disconnected.
@@ -107,16 +109,20 @@ func (this *WebSocketController) PushNotificacion() {
 		var usuario string
 		var usuarioDestino []string
 		var cuerpo map[string]interface{}
+		var alias string
+		var estiloIcono string
+
 		err = utilidades.FillStruct(v["DestinationProfiles"], &perfil)
 		err = utilidades.FillStruct(v["Application"], &usuario)
 		err = utilidades.FillStruct(v["NotificationBody"], &cuerpo)
 		err = utilidades.FillStruct(v["UserDestination"], &usuarioDestino)
-		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local())
+		err = utilidades.FillStruct(v["Alias"], &alias)
+		err = utilidades.FillStruct(v["EstiloIcono"], &estiloIcono)
+		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local(), alias, estiloIcono)
 		j, _ := json.Marshal(cuerpo)
 		if v["UserDestination"] == "" {
 			data := map[string]interface{}{
 				"CuerpoNotificacion":        string(j),
-				"EstadoNotificacion":        map[string]interface{}{"Id": 1},
 				"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
 			utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"notificacion", "POST", &res, data)
 			beego.Info(beego.AppConfig.String("configuracionUrl") + "notificacion")
@@ -127,7 +133,6 @@ func (this *WebSocketController) PushNotificacion() {
 
 			data := map[string]interface{}{
 				"CuerpoNotificacion":        string(j),
-				"EstadoNotificacion":        map[string]interface{}{"Id": 1},
 				"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
 
 			notificacion := map[string]interface{}{
@@ -160,12 +165,14 @@ func (this *WebSocketController) PushNotificacionDb() {
 			var perfil []string
 			var usuario string
 			var cuerpo map[string]interface{}
+			var alias string
+			var estiloicono string
 			for _, profiledata := range v.NotificacionConfiguracion.NotificacionConfiguracionPerfil {
 				perfil = append(perfil, profiledata.Perfil.Nombre)
 			}
 			usuario = v.NotificacionConfiguracion.Aplicacion.Nombre
 			err = json.Unmarshal([]byte(v.CuerpoNotificacion), &cuerpo)
-			publish <- newEvent(models.EVENT_MESSAGE, usuario, nil, perfil, cuerpo, v.FechaCreacion)
+			publish <- newEvent(models.EVENT_MESSAGE, usuario, nil, perfil, cuerpo, v.FechaCreacion, alias, estiloicono)
 		}
 		this.Ctx.Output.SetStatus(201)
 		alert := models.Alert{Type: "success", Code: "S_544", Body: m}

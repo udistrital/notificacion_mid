@@ -42,6 +42,8 @@ type Event struct {
 	Content         map[string]interface{}
 	FechaCreacion   time.Time
 	UserDestination []string
+	Alias           string
+	EstiloIcono     string
 }
 
 const archiveSize = 20
