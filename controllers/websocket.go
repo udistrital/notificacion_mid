@@ -111,6 +111,7 @@ func (this *WebSocketController) PushNotificacion() {
 		var cuerpo map[string]interface{}
 		var alias string
 		var estiloIcono string
+		var estado string
 
 		err = utilidades.FillStruct(v["DestinationProfiles"], &perfil)
 		err = utilidades.FillStruct(v["Application"], &usuario)
@@ -118,7 +119,9 @@ func (this *WebSocketController) PushNotificacion() {
 		err = utilidades.FillStruct(v["UserDestination"], &usuarioDestino)
 		err = utilidades.FillStruct(v["Alias"], &alias)
 		err = utilidades.FillStruct(v["EstiloIcono"], &estiloIcono)
-		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local(), alias, estiloIcono)
+		err = utilidades.FillStruct(v["Estado"], &estado)
+		beego.Info(v)
+		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local(), alias, estiloIcono, estado)
 		j, _ := json.Marshal(cuerpo)
 		if v["UserDestination"] == "" {
 			data := map[string]interface{}{
@@ -167,12 +170,14 @@ func (this *WebSocketController) PushNotificacionDb() {
 			var cuerpo map[string]interface{}
 			var alias string
 			var estiloicono string
+			var estado string
+
 			for _, profiledata := range v.NotificacionConfiguracion.NotificacionConfiguracionPerfil {
 				perfil = append(perfil, profiledata.Perfil.Nombre)
 			}
 			usuario = v.NotificacionConfiguracion.Aplicacion.Nombre
 			err = json.Unmarshal([]byte(v.CuerpoNotificacion), &cuerpo)
-			publish <- newEvent(models.EVENT_MESSAGE, usuario, nil, perfil, cuerpo, v.FechaCreacion, alias, estiloicono)
+			publish <- newEvent(models.EVENT_MESSAGE, usuario, nil, perfil, cuerpo, v.FechaCreacion, alias, estiloicono, estado)
 		}
 		this.Ctx.Output.SetStatus(201)
 		alert := models.Alert{Type: "success", Code: "S_544", Body: m}

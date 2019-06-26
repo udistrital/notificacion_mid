@@ -35,7 +35,7 @@ type BaseController struct {
 	i18n.Locale      // For i18n usage when process data and render template.
 }
 type Event struct {
-	Type            EventType // JOIN, LEAVE, MESSAGE
+	TypeEvent       EventType // JOIN, LEAVE, MESSAGE
 	User            string
 	Profiles        []string
 	Timestamp       int // Unix timestamp (secs)
@@ -44,6 +44,7 @@ type Event struct {
 	UserDestination []string
 	Alias           string
 	EstiloIcono     string
+	Estado          string
 }
 
 const archiveSize = 20

@@ -16,8 +16,8 @@ type Subscription struct {
 	New     <-chan models.Event // New events coming in.
 }
 
-func newEvent(ep models.EventType, user string, userDestination []string, profiles []string, msg map[string]interface{}, date time.Time, alias string, estiloicono string) models.Event {
-	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg, date, userDestination, alias, estiloicono}
+func newEvent(ep models.EventType, user string, userDestination []string, profiles []string, msg map[string]interface{}, date time.Time, alias string, estiloicono string, estado string) models.Event {
+	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg, date, userDestination, alias, estiloicono, estado}
 }
 
 // Join ...
@@ -89,7 +89,7 @@ func chatroom() {
 			broadcastWebSocket(event)
 			models.NewArchive(event)
 
-			if event.Type == models.EVENT_MESSAGE {
+			if event.TypeEvent == models.EVENT_MESSAGE {
 				beego.Info("Message from", event.User, ";Content:", event.FechaCreacion)
 			}
 		case unsub := <-unsubscribe:
