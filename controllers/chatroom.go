@@ -64,6 +64,8 @@ func chatroom() {
 	for {
 		select {
 		case sub := <-subscribe:
+			var cuerpo = map[string]interface{}{"Message": "Conectado"}
+			var usuarioDestino []string
 			if !isUserExist(subscribers, sub.Name) {
 				subscribers.PushBack(sub) // Add user to the end of list.
 				connectionsId[sub.Name] = sub.Conn
@@ -77,10 +79,10 @@ func chatroom() {
 					beego.Info("Register profile:", profile)
 				}
 				// Publish a JOIN event.
-				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, "",sub.Profiles, "Conected", time.Now().Local(),"", "", "conected") // Publish a LEAVE event. remove this message for prodct.
+				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, usuarioDestino, sub.Profiles, cuerpo, time.Now().Local(),"", "", "conected") // Publish a LEAVE event. remove this message for prodct.
 				beego.Info("New user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			} else {
-				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, "",sub.Profiles, "Conected", time.Now().Local(),"", "", "conected") // Publish a LEAVE event. remove this message for prodct.
+				// publish <- newEvent(models.EVENT_MESSAGE, sub.Name, usuarioDestino, sub.Profiles, cuerpo, time.Now().Local(),"", "", "conected") // Publish a LEAVE event. remove this message for prodct.
 				beego.Info("Old user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			}
 
