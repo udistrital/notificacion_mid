@@ -77,10 +77,10 @@ func chatroom() {
 					beego.Info("Register profile:", profile)
 				}
 				// Publish a JOIN event.
-				//publish <- newEvent(models.EVENT_MESSAGE, sub.Name, sub.Profiles, "Se unio al ws")
+				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, sub.Profiles, "Se unio al ws")
 				beego.Info("New user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			} else {
-				//publish <- newEvent(models.EVENT_MESSAGE, sub.Name, sub.Profiles, "reload") // Publish a LEAVE event. remove this message for prodct.
+				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, sub.Profiles, "reload") // Publish a LEAVE event. remove this message for prodct.
 				beego.Info("Old user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			}
 
