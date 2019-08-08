@@ -41,8 +41,8 @@ func (this *WebSocketController) Join() {
 	}
 
 	// Join chat room.
-	Join(Id, Profiles, ws)
 	defer Leave(Id)
+	Join(Id, Profiles, ws)
 
 	// Message receive loop.
 	for {
@@ -129,7 +129,7 @@ func (this *WebSocketController) PushNotificacion() {
 					"CuerpoNotificacion":        string(j),
 					"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
 				utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"notificacion/", "POST", &res, data)
-				beego.Info(res)
+				beego.Info("respuesta servicio", res)
 				beego.Info(beego.AppConfig.String("configuracionUrl") + "notificacion")
 				this.Ctx.Output.SetStatus(201)
 				alert := models.Alert{Type: "success", Code: "S_544", Body: v}

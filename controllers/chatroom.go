@@ -64,8 +64,8 @@ func chatroom() {
 	for {
 		select {
 		case sub := <-subscribe:
-			var cuerpo = map[string]interface{}{"Message": "Conectado"}
-			var usuarioDestino []string
+			// var cuerpo = map[string]interface{}{"Message": "Conectado"}
+			// var usuarioDestino []string
 			if !isUserExist(subscribers, sub.Name) {
 				subscribers.PushBack(sub) // Add user to the end of list.
 				connectionsId[sub.Name] = sub.Conn
@@ -79,7 +79,7 @@ func chatroom() {
 					beego.Info("Register profile:", profile)
 				}
 				// Publish a JOIN event.
-				publish <- newEvent(models.EVENT_MESSAGE, sub.Name, usuarioDestino, sub.Profiles, cuerpo, time.Now().Local(), "", "", "conected") // Publish a LEAVE event. remove this message for prodct.
+				// publish <- newEvent(models.EVENT_MESSAGE, sub.Name, usuarioDestino, sub.Profiles, cuerpo, time.Now().Local(), "", "", "conected") // Publish a LEAVE event. remove this message for prodct.
 				beego.Info("New user:", sub.Name, ";WebSocket:", sub.Conn != nil)
 			} else {
 				// publish <- newEvent(models.EVENT_MESSAGE, sub.Name, usuarioDestino, sub.Profiles, cuerpo, time.Now().Local(),"", "", "conected") // Publish a LEAVE event. remove this message for prodct.
@@ -91,9 +91,9 @@ func chatroom() {
 			broadcastWebSocket(event)
 			models.NewArchive(event)
 
-			if event.TypeEvent == models.EVENT_MESSAGE {
-				beego.Info("Message from", event.User, ";Content:", event.FechaCreacion)
-			}
+			// if event.TypeEvent == models.EVENT_MESSAGE {
+			// 	beego.Info("Message from", event.User, ";Content:", event.FechaCreacion)
+			// }
 		case unsub := <-unsubscribe:
 			for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
 				if sub.Value.(Subscriber).Name == unsub {
@@ -103,7 +103,7 @@ func chatroom() {
 					ws := sub.Value.(Subscriber).Conn
 					if ws != nil {
 						ws.Close()
-						beego.Error("WebSocket closed:", unsub)
+						beego.Error("WebSocket unsubscribe:", unsub)
 					}
 					//publish <- newEvent(models.EVENT_LEAVE, unsub, nil, "logout") // Publish a LEAVE event.
 					break

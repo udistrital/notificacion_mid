@@ -57,6 +57,7 @@ func NewArchive(event Event) {
 	if archive.Len() >= archiveSize {
 		archive.Remove(archive.Front())
 	}
+	// beego.Info("archivo", archive)
 	archive.PushBack(event)
 }
 
