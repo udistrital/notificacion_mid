@@ -6,18 +6,20 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
-func SendJson(url string, trequest string, target interface{}, datajson interface{}) error {
+func SendJson(urlp string, trequest string, target interface{}, datajson interface{}) error {
 	b := new(bytes.Buffer)
 	if datajson != nil {
 		json.NewEncoder(b).Encode(datajson)
 	}
 	client := &http.Client{}
-	req, err := http.NewRequest(trequest, url, b)
+	req, err := http.NewRequest(trequest, urlp, b)
 	r, err := client.Do(req)
-	//r, err := http.Post(url, "application/json; charset=utf-8", b)
 	if err != nil {
+		beego.Error("error", err)
 		return err
 	}
 	defer r.Body.Close()

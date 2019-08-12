@@ -41,8 +41,8 @@ func (this *WebSocketController) Join() {
 	}
 
 	// Join chat room.
-	Join(Id, Profiles, ws)
 	defer Leave(Id)
+	Join(Id, Profiles, ws)
 
 	// Message receive loop.
 	for {
@@ -99,7 +99,7 @@ func broadcastWebSocket(event models.Event) {
 func (this *WebSocketController) PushNotificacion() {
 	fmt.Println("entro")
 	var v map[string]interface{}
-	var res interface{}
+	var res map[string]interface{}
 	//UserId := c.GetString("id")
 	//fmt.Println("Id ", UserId)
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &v); err == nil {
@@ -120,39 +120,44 @@ func (this *WebSocketController) PushNotificacion() {
 		err = utilidades.FillStruct(v["Alias"], &alias)
 		err = utilidades.FillStruct(v["EstiloIcono"], &estiloIcono)
 		err = utilidades.FillStruct(v["Estado"], &estado)
-		beego.Info(v)
+
 		publish <- newEvent(models.EVENT_MESSAGE, usuario, usuarioDestino, perfil, cuerpo, time.Now().Local(), alias, estiloIcono, estado)
-		j, _ := json.Marshal(cuerpo)
-		if v["UserDestination"] == "" {
-			data := map[string]interface{}{
-				"CuerpoNotificacion":        string(j),
-				"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
-			utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"notificacion", "POST", &res, data)
-			beego.Info(beego.AppConfig.String("configuracionUrl") + "notificacion")
-			this.Ctx.Output.SetStatus(201)
-			alert := models.Alert{Type: "success", Code: "S_544", Body: v}
-			this.Data["json"] = alert
+		j, error := json.Marshal(cuerpo)
+		if error == nil {
+			if v["UserDestination"] == "" {
+				data := map[string]interface{}{
+					"CuerpoNotificacion":        string(j),
+					"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
+				utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"notificacion/", "POST", &res, data)
+				beego.Info("respuesta servicio", res)
+				beego.Info(beego.AppConfig.String("configuracionUrl") + "notificacion")
+				this.Ctx.Output.SetStatus(201)
+				alert := models.Alert{Type: "success", Code: "S_544", Body: v}
+				this.Data["json"] = alert
+			} else {
+
+				data := map[string]interface{}{
+					"CuerpoNotificacion":        string(j),
+					"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
+
+				notificacion := map[string]interface{}{
+					"Notificacion": data,
+					"Usuarios":     v["UserDestination"]}
+
+				utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"notificacion_estado_usuario/pushNotificationUser", "POST", &res, notificacion)
+				beego.Info(beego.AppConfig.String("configuracionUrl") + "notificacion_estado_usuario/pushNotificationUser")
+				this.Ctx.Output.SetStatus(201)
+				alert := models.Alert{Type: "success", Code: "S_544", Body: notificacion}
+				this.Data["json"] = alert
+			}
 		} else {
-
-			data := map[string]interface{}{
-				"CuerpoNotificacion":        string(j),
-				"NotificacionConfiguracion": map[string]interface{}{"Id": v["ConfiguracionNotificacion"]}}
-
-			notificacion := map[string]interface{}{
-				"Notificacion": data,
-				"Usuarios":     v["UserDestination"]}
-
-			utilidades.SendJson(beego.AppConfig.String("configuracionUrl")+"notificacion_estado_usuario/pushNotificationUser", "POST", &res, notificacion)
-			beego.Info(beego.AppConfig.String("configuracionUrl") + "notificacion_estado_usuario/pushNotificationUser")
-			this.Ctx.Output.SetStatus(201)
-			alert := models.Alert{Type: "success", Code: "S_544", Body: notificacion}
-			this.Data["json"] = alert
+			beego.Info(error)
 		}
+
 	} else {
 		alert := models.Alert{Type: "error", Code: "E_N001", Body: err.Error()}
 		this.Data["json"] = alert
 	}
-	this.ServeJSON()
 }
 
 // broadcastWebSocket broadcasts messages to WebSocket users from db
