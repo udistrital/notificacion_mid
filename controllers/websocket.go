@@ -20,39 +20,51 @@ type WebSocketController struct {
 
 // Join method handles WebSocket requests for WebSocketController.
 func (this *WebSocketController) Join() {
-	Id := this.GetString("id")
+	var usuario models.Usuario
+	var Id string
+	var Profiles []string
+	var ProfilesFilter []string
+
+	Id = this.GetString("id")
 	if len(Id) == 0 {
 		beego.Info("Cannot get User Id")
 		return
 	}
-	Profiles := strings.Split(this.GetString("profiles"), ",")
-	if len(Id) == 0 {
-		beego.Info("Cannot get User Id")
-		return
-	}
-	// Upgrade from http request to WebSocket.
-	ws, err := websocket.Upgrade(this.Ctx.ResponseWriter, this.Ctx.Request, nil, 1024, 1024)
-	if _, ok := err.(websocket.HandshakeError); ok {
-		http.Error(this.Ctx.ResponseWriter, "Not a websocket handshake", 400)
-		return
-	} else if err != nil {
-		beego.Error("Cannot setup WebSocket connection:", err)
-		return
-	}
 
-	// Join chat room.
-	defer Leave(Id)
-	Join(Id, Profiles, ws)
-
-	// Message receive loop.
-	for {
-		_, p, err := ws.ReadMessage()
-		if err != nil {
-			return
+	if err := utilidades.GetJsonWithHeader(beego.AppConfig.String("userInfo"), &usuario, Id); err == nil {
+		Id = usuario.Sub
+		Profiles = strings.Split(usuario.Role, ",")
+		for _, value := range Profiles {
+			if strings.Index(value, "/") == -1 {
+				ProfilesFilter = append(ProfilesFilter, value)
+			}
 		}
-		var m map[string]interface{}
-		err = json.Unmarshal(p, &m)
-		//publish <- newEvent(models.EVENT_MESSAGE, Id, nil, Profiles, m, time.Now().Local(),)
+		if len(Id) > 0 && len(ProfilesFilter) > 0 {
+			// Upgrade from http request to WebSocket.
+			ws, err := websocket.Upgrade(this.Ctx.ResponseWriter, this.Ctx.Request, nil, 1024, 1024)
+			if _, ok := err.(websocket.HandshakeError); ok {
+				http.Error(this.Ctx.ResponseWriter, "Not a websocket handshake", 400)
+				return
+			} else if err != nil {
+				beego.Error("Cannot setup WebSocket connection:", err)
+				return
+			}
+			// Join chat room.
+			defer Leave(Id)
+			Join(Id, ProfilesFilter, ws)
+
+			// Message receive loop.
+			for {
+				_, p, err := ws.ReadMessage()
+				if err != nil {
+					return
+				}
+				var m map[string]interface{}
+				err = json.Unmarshal(p, &m)
+				//publish <- newEvent(models.EVENT_MESSAGE, Id, nil, Profiles, m, time.Now().Local(),)
+			}
+		}
+
 	}
 }
 

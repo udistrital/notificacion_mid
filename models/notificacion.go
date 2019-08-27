@@ -64,3 +64,8 @@ type NotificacionUsuarioMasiva struct {
 	Notificacion *Notificacion
 	Usuarios     []string
 }
+
+type Usuario struct {
+	Sub  string `json:"sub"`
+	Role string
+}
