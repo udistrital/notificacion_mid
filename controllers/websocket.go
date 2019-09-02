@@ -30,7 +30,8 @@ func (this *WebSocketController) Join() {
 		beego.Info("Cannot get User Id")
 		return
 	}
-
+	beego.Info(beego.AppConfig.String("userInfo"))
+	beego.Info(Id)
 	if err := utilidades.GetJsonWithHeader(beego.AppConfig.String("userInfo"), &usuario, Id); err == nil {
 		Id = usuario.Sub
 		Profiles = strings.Split(usuario.Role, ",")
