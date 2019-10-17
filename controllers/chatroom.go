@@ -31,6 +31,7 @@ func newEvent(ep models.EventType, user string, userDestination []string, profil
 func Join(user string, user_time string, profiles []string, ws *websocket.Conn) {
 	var m []models.Notificacion
 	utilidades.GetJson(beego.AppConfig.String("configuracionUrl")+"notificacion_estado_usuario/getOldNotification/"+strings.Join(profiles, ",")+"/"+user, &m)
+	beego.Info(m)
 	subscribe <- Subscriber{Name: user, UserTime: user_time,Profiles: profiles, Conn: ws}
 }
 
@@ -129,7 +130,7 @@ func isUserExist(subscribers *list.List, user string) bool {
 	}
 	return false
 }
-
+// 
 func users(userMap map[string]*websocket.Conn, userName string) []string{
 	keys := make([]string, 0, len(userMap))
     for k := range userMap {
