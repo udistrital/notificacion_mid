@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"strings"
 	"time"
+
 	"github.com/astaxie/beego"
 	"github.com/gorilla/websocket"
 	"github.com/udistrital/notificacion_api/models"
@@ -16,7 +17,7 @@ type Subscription struct {
 }
 
 func newEvent(ep models.EventType, user string, userDestination []string, profiles []string, msg map[string]interface{}, date time.Time, alias string, estiloicono string, estado string) models.Event {
-	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg, date, userDestination, alias, estiloicono, estado }
+	return models.Event{ep, user, profiles, int(time.Now().Unix()), msg, date, userDestination, alias, estiloicono, estado}
 }
 
 // Join ...
@@ -32,7 +33,7 @@ func Join(user string, user_time string, profiles []string, ws *websocket.Conn) 
 	var m []models.Notificacion
 	utilidades.GetJson(beego.AppConfig.String("configuracionUrl")+"notificacion_estado_usuario/getOldNotification/"+strings.Join(profiles, ",")+"/"+user, &m)
 	beego.Info(m)
-	subscribe <- Subscriber{Name: user, UserTime: user_time,Profiles: profiles, Conn: ws}
+	subscribe <- Subscriber{Name: user, UserTime: user_time, Profiles: profiles, Conn: ws}
 }
 
 func Leave(user string) {
@@ -41,7 +42,7 @@ func Leave(user string) {
 
 type Subscriber struct {
 	Name     string
-	UserTime  string
+	UserTime string
 	Profiles []string
 	Conn     *websocket.Conn // Only for WebSocket users; otherwise nil.
 }
@@ -98,16 +99,23 @@ func chatroom() {
 			// 	beego.Info("Message from", event.User, ";Content:", event.FechaCreacion)
 			// }
 		case unsub := <-unsubscribe:
-			// beego.Info(unsub)
+			beego.Info(unsub)
+
 			for sub := subscribers.Front(); sub != nil; sub = sub.Next() {
-				if sub.Value.(Subscriber).Name + "_" + sub.Value.(Subscriber).UserTime == unsub {
+				if sub.Value.(Subscriber).Name+"_"+sub.Value.(Subscriber).UserTime == unsub {
+					// beego.Info(k)
+					// delete(connectionsProfile[k], unsub)
+					// }
+					deleteConn(connectionsProfile, unsub)
 					subscribers.Remove(sub)
-					delete(connectionsId, unsub)
+					beego.Info("users", connectionsId)
+					beego.Info("profiles", connectionsProfile)
+					beego.Info("unsubscribers", connectionsProfile)
 					// Clone connection.
 					ws := sub.Value.(Subscriber).Conn
 					if ws != nil {
 						ws.Close()
-						beego.Error("WebSocket unsubscribe:", unsub)
+						beego.Error("WebSocket unsubscribe:", unsubscribe)
 					}
 					//publish <- newEvent(models.EVENT_LEAVE, unsub, nil, "logout") // Publish a LEAVE event.
 					break
@@ -115,6 +123,10 @@ func chatroom() {
 			}
 		}
 	}
+}
+
+func deleteConections() {
+
 }
 
 func init() {
@@ -130,15 +142,28 @@ func isUserExist(subscribers *list.List, user string) bool {
 	}
 	return false
 }
-// 
-func users(userMap map[string]*websocket.Conn, userName string) []string{
+
+//
+func users(userMap map[string]*websocket.Conn, userName string) []string {
 	keys := make([]string, 0, len(userMap))
-    for k := range userMap {
+	for k := range userMap {
 		beego.Info(k)
 		i := strings.Index(k, userName)
-		if(i != -1) {
+		if i != -1 {
 			keys = append(keys, k)
 		}
 	}
+	return keys
+}
+
+func deleteConn(Profiles map[string]map[string]*websocket.Conn, userName string) []string {
+	keys := make([]string, 0, len(Profiles))
+	for k := range Profiles {
+		delete(Profiles[k], userName)
+		if len(Profiles[k]) == 0 {
+			delete(Profiles, k)
+		}
+	}
+	delete(connectionsId, userName)
 	return keys
 }
