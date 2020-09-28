@@ -5,19 +5,24 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"reflect"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
-func SendJson(url string, trequest string, target interface{}, datajson interface{}) error {
+type filterf func(interface{}) bool
+
+func SendJson(urlp string, trequest string, target interface{}, datajson interface{}) error {
 	b := new(bytes.Buffer)
 	if datajson != nil {
 		json.NewEncoder(b).Encode(datajson)
 	}
 	client := &http.Client{}
-	req, err := http.NewRequest(trequest, url, b)
+	req, err := http.NewRequest(trequest, urlp, b)
 	r, err := client.Do(req)
-	//r, err := http.Post(url, "application/json; charset=utf-8", b)
 	if err != nil {
+		beego.Error("error", err)
 		return err
 	}
 	defer r.Body.Close()
@@ -33,6 +38,24 @@ func GetJson(url string, target interface{}) error {
 	defer r.Body.Close()
 
 	return json.NewDecoder(r.Body).Decode(target)
+}
+
+func GetJsonWithHeader(urlp string, target interface{}, access_token string) error {
+	req, err := http.NewRequest("GET", urlp, nil)
+	if err != nil {
+		beego.Error("Error reading request. ", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+access_token)
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		beego.Error("Error reading response. ", err)
+	}
+
+	defer resp.Body.Close()
+	return json.NewDecoder(resp.Body).Decode(target)
 }
 
 func FillStruct(m interface{}, s interface{}) (err error) {
@@ -64,4 +87,19 @@ func FillStructDeep(m map[string]interface{}, fields string, s interface{}) (err
 	j, _ := json.Marshal(load)
 	err = json.Unmarshal(j, s)
 	return
+}
+
+func Filter(in interface{}, fn filterf) interface{} {
+	val := reflect.ValueOf(in)
+	out := make([]interface{}, 0, val.Len())
+
+	for i := 0; i < val.Len(); i++ {
+		current := val.Index(i).Interface()
+
+		if fn(current) {
+			out = append(out, current)
+		}
+	}
+
+	return out
 }
