@@ -1,1 +1,0 @@
-//plantilla para evento join
