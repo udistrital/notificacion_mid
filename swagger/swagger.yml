@@ -1,3 +1,63 @@
 swagger: "2.0"
-info: {}
-paths: {}
+info:
+  title: beego Test API
+  description: beego has a very cool tools to autogenerate documents for your API
+  version: 1.0.0
+  termsOfService: http://beego.me/
+  contact:
+    email: astaxie@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+basePath: /v1
+paths:
+  /notificacion/:
+    post:
+      tags:
+      - notificacion
+      description: Envía una notificación a cualquier suscriptor. La propiedad "Atributos"
+        es opcional
+      operationId: NotificacionController.PostOneNotif
+      parameters:
+      - in: body
+        name: body
+        description: Body de la notificación
+        required: true
+        schema:
+          $ref: '#/definitions/models.Notificacion'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/map[string]interface{"Success","Status","Message","Data"}'
+        "400":
+          description: Error en parametros ingresados
+definitions:
+  621.0xc000259d70.false:
+    title: "false"
+    type: object
+  map[string]interface{"Success","Status","Message","Data"}:
+    title: map[string]interface{"Success","Status","Message","Data"}
+    type: object
+  models.Notificacion:
+    title: Notificacion
+    type: object
+    properties:
+      Arn:
+        type: string
+      Asunto:
+        type: string
+      Atributos:
+        $ref: '#/definitions/621.0xc000259d70.false'
+      DestinatarioId:
+        type: array
+        items:
+          type: string
+      Mensaje:
+        type: string
+      RemitenteId:
+        type: string
+tags:
+- name: notificacion
+  description: |
+    NotificacionController operations for Notificacion
