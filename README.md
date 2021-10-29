@@ -1,5 +1,5 @@
 # notificacion_api
-Servicio para registrarse y enviar mensaje despreciado por id de usuario y perfil por medio de websockets.
+Servicio para envío de notificaciónes por difusión en AWS SNS
 
 ## Especificaciones Técnicas
 
@@ -8,13 +8,11 @@ Servicio para registrarse y enviar mensaje despreciado por id de usuario y perfi
 * [BeeGo](https://github.com/udistrital/introduccion_oas/blob/master/instalacion_de_herramientas/beego.md)
 * [Docker](https://docs.docker.com/engine/install/ubuntu/)
 * [Docker Compose](https://docs.docker.com/compose/)
+* [AWS SNS](https://aws.amazon.com/es/sns/)
 
 ### Variables de Entorno
 ```shell
-# Ejemplo que se debe actualizar acorde al proyecto
-NOTIFICACION_API_HTTP_PORT = [descripción]
-CONFIGURACION_SERVICE = [descripción]
-USERINFO_SERVICE = [descripción]
+NOTIFICACION_API_HTTP_PORT = [Puerto de ejecucion]
 ```
 **NOTA:** Las variables se pueden ver en el fichero conf/app.conf y están identificadas.
 
