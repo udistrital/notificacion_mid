@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/astaxie/beego/logs"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/aws/aws-sdk-go-v2/service/sns/types"
@@ -58,6 +59,39 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 	}
 
 	msgId = *result.MessageId
+
+	return
+}
+
+func Suscribir(body models.Suscripcion) (Arn string, outputError map[string]interface{}) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/Suscribir", "err": err, "status": "502"}
+		return "", outputError
+	}
+
+	client := sns.NewFromConfig(cfg)
+
+	for _, subscriptor := range body.Suscritos {
+		input := &sns.SubscribeInput{
+			Endpoint:              &subscriptor.Endpoint,
+			Protocol:              aws.String(subscriptor.Protocolo),
+			ReturnSubscriptionArn: true,
+			TopicArn:              &body.ArnTopic,
+			Attributes: map[string]string{
+				"Destinatario": subscriptor.Id,
+			},
+		}
+
+		result, err := client.Subscribe(context.TODO(), input)
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err, "status": "502"}
+			return "", outputError
+		}
+		Arn = *result.SubscriptionArn
+	}
 
 	return
 }
