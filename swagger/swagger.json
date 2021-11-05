@@ -15,7 +15,7 @@
     },
     "basePath": "/v1",
     "paths": {
-        "/notificacion/": {
+        "/notificacion/enviar/": {
             "post": {
                 "tags": [
                     "notificacion"
@@ -35,9 +35,66 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "",
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{\"Success\",\"Status\",\"Message\",\"Data\"}"
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
+        "/notificacion/suscribir/": {
+            "post": {
+                "tags": [
+                    "notificacion"
+                ],
+                "description": "Suscribe cualquier tipo de endpoint a un topic",
+                "operationId": "NotificacionController.Subscribe",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body de la suscripcion",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Suscripcion"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "atributos",
+                        "description": "Atributos para filtrado de mensajes (atributo = valor, ...)",
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
+        "/notificacion/topics/": {
+            "get": {
+                "tags": [
+                    "notificacion"
+                ],
+                "description": "Lista todos los ARN de los topics disponibles",
+                "operationId": "NotificacionController.GetTopics",
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data []string}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -48,13 +105,28 @@
         }
     },
     "definitions": {
-        "621.0xc000259d70.false": {
+        "1304.0xc000334390.false": {
             "title": "false",
             "type": "object"
         },
-        "map[string]interface{\"Success\",\"Status\",\"Message\",\"Data\"}": {
-            "title": "map[string]interface{\"Success\",\"Status\",\"Message\",\"Data\"}",
+        "map[string]interface{Success": {
+            "title": "map[string]interface{Success",
             "type": "object"
+        },
+        "models.Endpoint": {
+            "title": "Endpoint",
+            "type": "object",
+            "properties": {
+                "Endpoint": {
+                    "type": "string"
+                },
+                "Id": {
+                    "type": "string"
+                },
+                "Protocolo": {
+                    "type": "string"
+                }
+            }
         },
         "models.Notificacion": {
             "title": "Notificacion",
@@ -67,7 +139,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/621.0xc000259d70.false"
+                    "$ref": "#/definitions/1304.0xc000334390.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -80,6 +152,21 @@
                 },
                 "RemitenteId": {
                     "type": "string"
+                }
+            }
+        },
+        "models.Suscripcion": {
+            "title": "Suscripcion",
+            "type": "object",
+            "properties": {
+                "ArnTopic": {
+                    "type": "string"
+                },
+                "Suscritos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Endpoint"
+                    }
                 }
             }
         }

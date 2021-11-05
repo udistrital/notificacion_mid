@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
@@ -18,6 +20,9 @@ type NotificacionController struct {
 // URLMapping ...
 func (c *NotificacionController) URLMapping() {
 	c.Mapping("PostOneNotif", c.PostOneNotif)
+	c.Mapping("Subscribe", c.Subscribe)
+	c.Mapping("GetTopics", c.GetTopics)
+	c.Mapping("CreateTopic", c.CreateTopic)
 }
 
 // PostOneNotif ...
@@ -48,6 +53,7 @@ func (c *NotificacionController) PostOneNotif() {
 	if notif.RemitenteId == "" || len(notif.DestinatarioId) == 0 || notif.Asunto == "" || notif.Mensaje == "" {
 		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
+
 	if respuesta, err := helpers.PublicarNotificacion(notif); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"MessageId": respuesta}}
@@ -61,11 +67,13 @@ func (c *NotificacionController) PostOneNotif() {
 // @Title Subscribe
 // @Description Suscribe cualquier tipo de endpoint a un topic
 // @Param	body		body 	models.Suscripcion	true		"Body de la suscripcion"
+// @Param	atributos	query	string				false		"Atributos para filtrado de mensajes (atributo:valor, ...)"
 // @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data map[string]interface{}}
 // @Failure 400 Error en parametros ingresados
 // @router /suscribir/ [post]
 func (c *NotificacionController) Subscribe() {
 	var sub models.Suscripcion
+	var atributos = make(map[string]string)
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -89,9 +97,82 @@ func (c *NotificacionController) Subscribe() {
 		}
 	}
 
-	if respuesta, err := helpers.Suscribir(sub); err == nil {
+	if v := c.GetString("atributos"); v != "" {
+		for _, cond := range strings.Split(v, ",") {
+			kv := strings.SplitN(cond, ":", 2)
+			if len(kv) != 2 {
+				c.Data["json"] = errors.New("error: atributos invalidos")
+				c.ServeJSON()
+				return
+			}
+			k, v := kv[0], kv[1]
+			atributos[k] = v
+		}
+	}
+
+	if respuesta, err := helpers.Suscribir(sub, atributos); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"TopicARN": respuesta}}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
+// GetTopics ...
+// @Title GetTopics
+// @Description Lista todos los ARN de los topics disponibles
+// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string}
+// @Failure 400 Error en parametros ingresados
+// @router /topics/ [get]
+func (c *NotificacionController) GetTopics() {
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/GetTopics/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+
+	if respuesta, err := helpers.ListaTopics(); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
+// CreateTopic ...
+// @Title CreateTopic
+// @Description Lista todos los ARN de los topics disponibles
+// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string}
+// @Failure 400 Error en parametros ingresados
+// @router /topics/ [post]
+func (c *NotificacionController) CreateTopic() {
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/CreateTopic/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+
+	if respuesta, err := helpers.ListaTopics(); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {
 		panic(err)
 	}

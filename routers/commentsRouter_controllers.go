@@ -10,8 +10,26 @@ func init() {
     beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"],
         beego.ControllerComments{
             Method: "PostOneNotif",
-            Router: `/`,
+            Router: "/enviar/",
             AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"],
+        beego.ControllerComments{
+            Method: "Subscribe",
+            Router: "/suscribir/",
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"],
+        beego.ControllerComments{
+            Method: "GetTopics",
+            Router: "/topics/",
+            AllowHTTPMethods: []string{"get"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})
