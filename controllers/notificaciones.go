@@ -152,7 +152,7 @@ func (c *NotificacionController) GetTopics() {
 // CreateTopic ...
 // @Title CreateTopic
 // @Description Lista todos los ARN de los topics disponibles
-// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string}
+// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string }
 // @Failure 400 Error en parametros ingresados
 // @router /topics/ [post]
 func (c *NotificacionController) CreateTopic() {
