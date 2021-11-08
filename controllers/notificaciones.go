@@ -151,11 +151,14 @@ func (c *NotificacionController) GetTopics() {
 
 // CreateTopic ...
 // @Title CreateTopic
-// @Description Lista todos los ARN de los topics disponibles
+// @Description Crea un topic en sns
+// @Param	body		body 	models.Topic	true		"Body para configuracion del topic"
 // @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string }
 // @Failure 400 Error en parametros ingresados
 // @router /topics/ [post]
 func (c *NotificacionController) CreateTopic() {
+	var topic models.Topic
+
 	defer func() {
 		if err := recover(); err != nil {
 			logs.Error(err)
@@ -169,8 +172,12 @@ func (c *NotificacionController) CreateTopic() {
 			}
 		}
 	}()
+	json.Unmarshal(c.Ctx.Input.RequestBody, &topic)
+	if topic.Nombre == "" || topic.Display == "" {
+		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
+	}
 
-	if respuesta, err := helpers.ListaTopics(); err == nil {
+	if respuesta, err := helpers.CrearTopic(topic); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {
