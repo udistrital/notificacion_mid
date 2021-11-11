@@ -24,7 +24,6 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 	} else {
 		listaDestinatarios = body.DestinatarioId[0]
 	}
-	logs.Debug(listaDestinatarios)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -52,11 +51,24 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 		}
 	}
 
-	input := &sns.PublishInput{
-		Message:           &body.Mensaje,
-		MessageAttributes: atributos,
-		Subject:           &body.Asunto,
-		TopicArn:          &body.Arn,
+	var input *sns.PublishInput
+
+	if strings.Contains(body.Arn, ".fifo") {
+		input = &sns.PublishInput{
+			Message:                &body.Mensaje,
+			MessageAttributes:      atributos,
+			Subject:                &body.Asunto,
+			TopicArn:               &body.Arn,
+			MessageDeduplicationId: &body.IdDeduplicacion,
+			MessageGroupId:         &body.IdGrupoMensaje,
+		}
+	} else {
+		input = &sns.PublishInput{
+			Message:           &body.Mensaje,
+			MessageAttributes: atributos,
+			Subject:           &body.Asunto,
+			TopicArn:          &body.Arn,
+		}
 	}
 
 	result, err := client.Publish(context.TODO(), input)

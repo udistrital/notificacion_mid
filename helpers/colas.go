@@ -33,7 +33,6 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 
 	client := sqs.NewFromConfig(cfg)
 	policy, _ := json.Marshal(cola.Politica)
-	logs.Debug(string(policy))
 	input := &sqs.CreateQueueInput{
 		QueueName: &cola.Nombre,
 		Attributes: map[string]string{
@@ -43,6 +42,7 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 			"ReceiveMessageWaitTimeSeconds": strconv.Itoa(cola.TiempoEspera),
 			"VisibilityTimeout":             strconv.Itoa(cola.EsperaVisibilidad),
 			"Policy":                        string(policy),
+			"FifoQueue":                     strconv.FormatBool(cola.EsFifo),
 		},
 		Tags: map[string]string{
 			"Name":        cola.Nombre,
@@ -59,7 +59,7 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 	return *result.QueueUrl, nil
 }
 
-func RecibirMensajes(url string) (mensajes []types.Message, outputError map[string]interface{}) {
+func RecibirMensajes(nombre string, tiempoOculto int) (mensajes []models.Mensaje, outputError map[string]interface{}) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -69,15 +69,27 @@ func RecibirMensajes(url string) (mensajes []types.Message, outputError map[stri
 
 	client := sqs.NewFromConfig(cfg)
 
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &nombre,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err, "status": "502"}
+		return nil, outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
 	input := &sqs.ReceiveMessageInput{
 		MessageAttributeNames: []string{
 			string(types.QueueAttributeNameAll),
 		},
-		QueueUrl:            &url,
+		QueueUrl:            queueURL,
 		MaxNumberOfMessages: 10,
+		VisibilityTimeout:   int32(tiempoOculto),
 	}
-
-	logs.Debug(url)
 
 	result, err := client.ReceiveMessage(context.TODO(), input)
 	if err != nil {
@@ -85,7 +97,54 @@ func RecibirMensajes(url string) (mensajes []types.Message, outputError map[stri
 		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err, "status": "502"}
 		return nil, outputError
 	}
-	return result.Messages, nil
+	for _, m := range result.Messages {
+		var body map[string]interface{}
+		json.Unmarshal([]byte(*m.Body), &body)
+		mensajes = append(mensajes, models.Mensaje{
+			Attributes:    m.Attributes,
+			Body:          body,
+			ReceiptHandle: *m.ReceiptHandle,
+		})
+	}
+	return
+}
+
+func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]interface{}) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		return outputError
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &cola,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		return outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
+	dMInput := &sqs.DeleteMessageInput{
+		QueueUrl:      queueURL,
+		ReceiptHandle: &mensaje.ReceiptHandle,
+	}
+
+	_, err = client.DeleteMessage(context.TODO(), dMInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		return outputError
+	}
+
+	return
 }
 
 func ValoresDefault(cola *models.Cola) {
@@ -98,7 +157,6 @@ func ValoresDefault(cola *models.Cola) {
 	if cola.TamañoMaximo == 0 {
 		cola.TamañoMaximo = 262144
 	}
-	logs.Debug(cola.Politica)
 	if cola.Politica == nil {
 		cola.Politica = &models.Politica{
 			Version: "2008-10-17",
@@ -117,7 +175,7 @@ func ValoresDefault(cola *models.Cola) {
 				Resource: "arn:aws:sqs:*",
 				Condition: map[string]map[string]string{
 					"ArnLike": {
-						"aws:SourceArn": "arn:aws:sns:us-east-1:*",
+						"aws:SourceArn": "arn:aws:sns:us-east-1:*:*",
 					},
 				},
 				Principal: struct{ AWS string }{

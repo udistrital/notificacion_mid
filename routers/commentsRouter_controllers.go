@@ -9,6 +9,15 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"],
         beego.ControllerComments{
+            Method: "Delete",
+            Router: "/:cola",
+            AllowHTTPMethods: []string{"delete"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"],
+        beego.ControllerComments{
             Method: "CrearCola",
             Router: "/crear/",
             AllowHTTPMethods: []string{"post"},

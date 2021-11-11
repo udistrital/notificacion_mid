@@ -60,17 +60,59 @@
                         "description": "Nombre de la cola",
                         "required": true,
                         "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "tiempoOculto",
+                        "description": "El tiempo en segundos que un mensaje recibido se ocultará en la cola",
+                        "type": "integer",
+                        "format": "int64"
                     }
                 ],
                 "responses": {
                     "201": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/models.Cola"
+                            "$ref": "#/definitions/models.Mensaje"
                         }
                     },
                     "400": {
                         "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
+        "/colas/{cola}": {
+            "delete": {
+                "tags": [
+                    "colas"
+                ],
+                "description": "Borra la notificación de la cola",
+                "operationId": "ColasController.DeleteMessage",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cola",
+                        "description": "Nombre de la cola en donde está el mensaje",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "mensaje",
+                        "description": "Mensaje a borrar",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Mensaje"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{string} Mensaje eliminado"
+                    },
+                    "404": {
+                        "description": "not found resource"
                     }
                 }
             }
@@ -194,11 +236,15 @@
         }
     },
     "definitions": {
-        "1563.0xc0003d56b0.false": {
+        "1007.0xc000370210.false": {
             "title": "false",
             "type": "object"
         },
-        "1842.0xc0003d58c0.false": {
+        "1697.0xc0003703c0.false": {
+            "title": "false",
+            "type": "object"
+        },
+        "2312.0xc0003705d0.false": {
             "title": "false",
             "type": "object"
         },
@@ -263,6 +309,23 @@
                 }
             }
         },
+        "models.Mensaje": {
+            "title": "Mensaje",
+            "type": "object",
+            "properties": {
+                "Attributes": {
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "Body": {
+                    "$ref": "#/definitions/1007.0xc000370210.false"
+                },
+                "ReceiptHandle": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Notificacion": {
             "title": "Notificacion",
             "type": "object",
@@ -274,13 +337,19 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/1563.0xc0003d56b0.false"
+                    "$ref": "#/definitions/1697.0xc0003703c0.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
+                },
+                "IdDeduplicacion": {
+                    "type": "string"
+                },
+                "IdGrupoMensaje": {
+                    "type": "string"
                 },
                 "Mensaje": {
                     "type": "string"
@@ -300,7 +369,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/1842.0xc0003d58c0.false"
+                        "$ref": "#/definitions/2312.0xc0003705d0.false"
                     }
                 },
                 "Version": {
