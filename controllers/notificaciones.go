@@ -23,6 +23,7 @@ func (c *NotificacionController) URLMapping() {
 	c.Mapping("Subscribe", c.Subscribe)
 	c.Mapping("GetTopics", c.GetTopics)
 	c.Mapping("CreateTopic", c.CreateTopic)
+	c.Mapping("VerifSus", c.VerifSus)
 }
 
 // PostOneNotif ...
@@ -119,6 +120,43 @@ func (c *NotificacionController) Subscribe() {
 	c.ServeJSON()
 }
 
+// CreateTopic ...
+// @Title CreateTopic
+// @Description Crea un topic en sns
+// @Param	body		body 	models.Topic	true		"Body para configuracion del topic"
+// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string }
+// @Failure 400 Error en parametros ingresados
+// @router /topics/ [post]
+func (c *NotificacionController) CreateTopic() {
+	var topic models.Topic
+
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/CreateTopic/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+	json.Unmarshal(c.Ctx.Input.RequestBody, &topic)
+	if topic.Nombre == "" || topic.Display == "" {
+		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
+	}
+
+	if respuesta, err := helpers.CrearTopic(topic); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
 // GetTopics ...
 // @Title GetTopics
 // @Description Lista todos los ARN de los topics disponibles
@@ -149,21 +187,21 @@ func (c *NotificacionController) GetTopics() {
 	c.ServeJSON()
 }
 
-// CreateTopic ...
-// @Title CreateTopic
-// @Description Crea un topic en sns
-// @Param	body		body 	models.Topic	true		"Body para configuracion del topic"
-// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string }
+// VerifSus ...
+// @Title VerifSus
+// @Description Lista todos los ARN de los topics disponibles
+// @Param	arn	path	string	true	"Arn del topic del que se quiere consultar la suscripción"
+// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string}
 // @Failure 400 Error en parametros ingresados
-// @router /topics/ [post]
-func (c *NotificacionController) CreateTopic() {
-	var topic models.Topic
+// @router /suscripcion/:arn [get]
+func (c *NotificacionController) VerifSus() {
+	arn := "arn:aws:sns:us-east-1:505909609706:" + c.GetString(":TopicArn")
 
 	defer func() {
 		if err := recover(); err != nil {
 			logs.Error(err)
 			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/CreateTopic/" + (localError["funcion"]).(string))
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/VerifSus/" + (localError["funcion"]).(string))
 			c.Data["data"] = (localError["err"])
 			if status, ok := localError["status"]; ok {
 				c.Abort(status.(string))
@@ -172,12 +210,8 @@ func (c *NotificacionController) CreateTopic() {
 			}
 		}
 	}()
-	json.Unmarshal(c.Ctx.Input.RequestBody, &topic)
-	if topic.Nombre == "" || topic.Display == "" {
-		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
-	}
 
-	if respuesta, err := helpers.CrearTopic(topic); err == nil {
+	if respuesta, err := helpers.VerificarSuscripcion(arn, c.GetString(":id")); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {

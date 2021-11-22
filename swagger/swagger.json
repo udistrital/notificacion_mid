@@ -185,6 +185,35 @@
                 }
             }
         },
+        "/notificaciones/suscripcion/{arn}": {
+            "get": {
+                "tags": [
+                    "notificaciones"
+                ],
+                "description": "Lista todos los ARN de los topics disponibles",
+                "operationId": "NotificacionController.VerifSus",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "arn",
+                        "description": "Arn del topic del que se quiere consultar la suscripción",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data []string}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
         "/notificaciones/topics/": {
             "get": {
                 "tags": [
@@ -236,15 +265,15 @@
         }
     },
     "definitions": {
-        "1007.0xc000370210.false": {
+        "1671.0xc0003aafc0.false": {
             "title": "false",
             "type": "object"
         },
-        "1697.0xc0003703c0.false": {
+        "2286.0xc0003ab1d0.false": {
             "title": "false",
             "type": "object"
         },
-        "2312.0xc0003705d0.false": {
+        "981.0xc0003aae10.false": {
             "title": "false",
             "type": "object"
         },
@@ -256,9 +285,6 @@
             "title": "Cola",
             "type": "object",
             "properties": {
-                "ArnSns": {
-                    "type": "string"
-                },
                 "EsFifo": {
                     "type": "boolean"
                 },
@@ -319,7 +345,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/1007.0xc000370210.false"
+                    "$ref": "#/definitions/981.0xc0003aae10.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -337,7 +363,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/1697.0xc0003703c0.false"
+                    "$ref": "#/definitions/1671.0xc0003aafc0.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -369,7 +395,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/2312.0xc0003705d0.false"
+                        "$ref": "#/definitions/2286.0xc0003ab1d0.false"
                     }
                 },
                 "Version": {

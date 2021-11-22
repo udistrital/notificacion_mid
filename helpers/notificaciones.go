@@ -195,3 +195,29 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 
 	return *results.TopicArn, nil
 }
+
+func VerificarSuscripcion(id string, arn string) (suscrito bool, outputError map[string]interface{}) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+		return false, outputError
+	}
+
+	client := sns.NewFromConfig(cfg)
+
+	input := &sns.ListSubscriptionsByTopicInput{
+		TopicArn: &arn,
+	}
+
+	results, err := client.ListSubscriptionsByTopic(context.TODO(), input)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
+		return false, outputError
+	}
+
+	logs.Debug(*results)
+	return
+
+}

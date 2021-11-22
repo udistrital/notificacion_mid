@@ -9,5 +9,4 @@ type Cola struct {
 	TamañoMaximo      int
 	TiempoEspera      int
 	Politica          *Politica
-	ArnSns            string
 }
