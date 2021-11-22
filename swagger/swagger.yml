@@ -11,10 +11,78 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 basePath: /v1
 paths:
-  /notificacion/enviar/:
+  /colas/{cola}:
+    delete:
+      tags:
+      - colas
+      description: Borra la notificación de la cola
+      operationId: ColasController.DeleteMessage
+      parameters:
+      - in: path
+        name: cola
+        description: Nombre de la cola en donde está el mensaje
+        required: true
+        type: string
+      - in: body
+        name: mensaje
+        description: Mensaje a borrar
+        required: true
+        schema:
+          $ref: '#/definitions/models.Mensaje'
+      responses:
+        "200":
+          description: '{string} Mensaje eliminado'
+        "404":
+          description: not found resource
+  /colas/crear/:
     post:
       tags:
-      - notificacion
+      - colas
+      description: Crea colas sqs
+      operationId: ColasController.CrearCola
+      parameters:
+      - in: body
+        name: body
+        description: Configuración para la creación de la cola
+        required: true
+        schema:
+          $ref: '#/definitions/models.Cola'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.Colas'
+        "403":
+          description: body is empty
+  /colas/mensajes:
+    get:
+      tags:
+      - colas
+      description: Lista hasta 10 mensajes en cola
+      operationId: ColasController.RecibirMensajes
+      parameters:
+      - in: query
+        name: nombre
+        description: Nombre de la cola
+        required: true
+        type: string
+      - in: query
+        name: tiempoOculto
+        description: El tiempo en segundos que un mensaje recibido se ocultará en
+          la cola
+        type: integer
+        format: int64
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.Mensaje'
+        "400":
+          description: Error en parametros ingresados
+  /notificaciones/enviar/:
+    post:
+      tags:
+      - notificaciones
       description: Envía una notificación a cualquier suscriptor. La propiedad "Atributos"
         es opcional
       operationId: NotificacionController.PostOneNotif
@@ -32,10 +100,10 @@ paths:
             $ref: '#/definitions/map[string]interface{Success'
         "400":
           description: Error en parametros ingresados
-  /notificacion/suscribir/:
+  /notificaciones/suscribir/:
     post:
       tags:
-      - notificacion
+      - notificaciones
       description: Suscribe cualquier tipo de endpoint a un topic
       operationId: NotificacionController.Subscribe
       parameters:
@@ -47,7 +115,7 @@ paths:
           $ref: '#/definitions/models.Suscripcion'
       - in: query
         name: atributos
-        description: Atributos para filtrado de mensajes (atributo = valor, ...)
+        description: Atributos para filtrado de mensajes (atributo:valor, ...)
         type: string
       responses:
         "201":
@@ -56,10 +124,29 @@ paths:
             $ref: '#/definitions/map[string]interface{Success'
         "400":
           description: Error en parametros ingresados
-  /notificacion/topics/:
+  /notificaciones/suscripcion/{arn}:
     get:
       tags:
-      - notificacion
+      - notificaciones
+      description: Lista todos los ARN de los topics disponibles
+      operationId: NotificacionController.VerifSus
+      parameters:
+      - in: path
+        name: arn
+        description: Arn del topic del que se quiere consultar la suscripción
+        required: true
+        type: string
+      responses:
+        "201":
+          description: string,Status boolean,Message string,Data []string}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
+  /notificaciones/topics/:
+    get:
+      tags:
+      - notificaciones
       description: Lista todos los ARN de los topics disponibles
       operationId: NotificacionController.GetTopics
       responses:
@@ -69,12 +156,65 @@ paths:
             $ref: '#/definitions/map[string]interface{Success'
         "400":
           description: Error en parametros ingresados
+    post:
+      tags:
+      - notificaciones
+      description: Crea un topic en sns
+      operationId: NotificacionController.CreateTopic
+      parameters:
+      - in: body
+        name: body
+        description: Body para configuracion del topic
+        required: true
+        schema:
+          $ref: '#/definitions/models.Topic'
+      responses:
+        "201":
+          description: string,Status boolean,Message string,Data []string }
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
 definitions:
-  1304.0xc000334390.false:
+  981.0xc0003aae10.false:
+    title: "false"
+    type: object
+  1671.0xc0003aafc0.false:
+    title: "false"
+    type: object
+  2286.0xc0003ab1d0.false:
     title: "false"
     type: object
   map[string]interface{Success:
     title: map[string]interface{Success
+    type: object
+  models.Cola:
+    title: Cola
+    type: object
+    properties:
+      EsFifo:
+        type: boolean
+      EsperaVisibilidad:
+        type: integer
+        format: int64
+      Nombre:
+        type: string
+      Politica:
+        $ref: '#/definitions/models.Politica'
+      Retencion:
+        type: integer
+        format: int64
+      Retraso:
+        type: integer
+        format: int64
+      TamañoMaximo:
+        type: integer
+        format: int64
+      TiempoEspera:
+        type: integer
+        format: int64
+  models.Colas:
+    title: Colas
     type: object
   models.Endpoint:
     title: Endpoint
@@ -86,6 +226,17 @@ definitions:
         type: string
       Protocolo:
         type: string
+  models.Mensaje:
+    title: Mensaje
+    type: object
+    properties:
+      Attributes:
+        additionalProperties:
+          type: string
+      Body:
+        $ref: '#/definitions/981.0xc0003aae10.false'
+      ReceiptHandle:
+        type: string
   models.Notificacion:
     title: Notificacion
     type: object
@@ -95,14 +246,30 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1304.0xc000334390.false'
+        $ref: '#/definitions/1671.0xc0003aafc0.false'
       DestinatarioId:
         type: array
         items:
           type: string
+      IdDeduplicacion:
+        type: string
+      IdGrupoMensaje:
+        type: string
       Mensaje:
         type: string
       RemitenteId:
+        type: string
+  models.Politica:
+    title: Politica
+    type: object
+    properties:
+      Id:
+        type: string
+      Statement:
+        type: array
+        items:
+          $ref: '#/definitions/2286.0xc0003ab1d0.false'
+      Version:
         type: string
   models.Suscripcion:
     title: Suscripcion
@@ -114,7 +281,20 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/models.Endpoint'
+  models.Topic:
+    title: Topic
+    type: object
+    properties:
+      Display:
+        type: string
+      Fifo:
+        type: boolean
+      Nombre:
+        type: string
 tags:
-- name: notificacion
+- name: notificaciones
   description: |
     NotificacionController operations for Notificacion
+- name: colas
+  description: |
+    ColasController operations for Colas

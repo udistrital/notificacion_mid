@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -23,7 +24,6 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 	} else {
 		listaDestinatarios = body.DestinatarioId[0]
 	}
-	logs.Debug(listaDestinatarios)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -51,11 +51,24 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 		}
 	}
 
-	input := &sns.PublishInput{
-		Message:           &body.Mensaje,
-		MessageAttributes: atributos,
-		Subject:           &body.Asunto,
-		TopicArn:          &body.Arn,
+	var input *sns.PublishInput
+
+	if strings.Contains(body.Arn, ".fifo") {
+		input = &sns.PublishInput{
+			Message:                &body.Mensaje,
+			MessageAttributes:      atributos,
+			Subject:                &body.Asunto,
+			TopicArn:               &body.Arn,
+			MessageDeduplicationId: &body.IdDeduplicacion,
+			MessageGroupId:         &body.IdGrupoMensaje,
+		}
+	} else {
+		input = &sns.PublishInput{
+			Message:           &body.Mensaje,
+			MessageAttributes: atributos,
+			Subject:           &body.Asunto,
+			TopicArn:          &body.Arn,
+		}
 	}
 
 	result, err := client.Publish(context.TODO(), input)
@@ -102,6 +115,7 @@ func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string
 			outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err, "status": "502"}
 			return "", outputError
 		}
+
 		Arn = *result.SubscriptionArn
 	}
 
@@ -133,33 +147,77 @@ func ListaTopics() (topicArn []string, outputError map[string]interface{}) {
 	return
 }
 
-func CrearTopic(nombre string, display string, fifo bool) (arn string, outputError map[string]interface{}) {
-	if fifo {
-		nombre += ".fifo"
+func CrearTopic(topic models.Topic) (arn string, outputError map[string]interface{}) {
+	var tags []types.Tag
+	var key0 string = "Name"
+	var key1 string = "Environment"
+	var val1 string = "prod"
+
+	if beego.BConfig.RunMode == "dev" || beego.BConfig.RunMode == "test" {
+		val1 = "test"
+	}
+
+	if topic.Fifo {
+		topic.Nombre += ".fifo"
 	}
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
 		return "", outputError
 	}
+
+	tags = append(tags, types.Tag{
+		Key:   &key0,
+		Value: &topic.Nombre,
+	}, types.Tag{
+		Key:   &key1,
+		Value: &val1,
+	})
 
 	client := sns.NewFromConfig(cfg)
 
 	input := &sns.CreateTopicInput{
-		Name: &nombre,
+		Name: &topic.Nombre,
 		Attributes: map[string]string{
-			"DisplayName": display,
-			"FifoTopic":   strconv.FormatBool(fifo),
+			"DisplayName": topic.Display,
+			"FifoTopic":   strconv.FormatBool(topic.Fifo),
 		},
+		Tags: tags,
 	}
 
 	results, err := client.CreateTopic(context.TODO(), input)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
 		return "", outputError
 	}
 
 	return *results.TopicArn, nil
+}
+
+func VerificarSuscripcion(id string, arn string) (suscrito bool, outputError map[string]interface{}) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+		return false, outputError
+	}
+
+	client := sns.NewFromConfig(cfg)
+
+	input := &sns.ListSubscriptionsByTopicInput{
+		TopicArn: &arn,
+	}
+
+	results, err := client.ListSubscriptionsByTopic(context.TODO(), input)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
+		return false, outputError
+	}
+
+	logs.Debug(*results)
+	return
+
 }
