@@ -1,4 +1,4 @@
-# notificacion_api
+# notificacion_mid
 Servicio para envío de notificaciónes por difusión en AWS SNS
 
 ## Especificaciones Técnicas
@@ -12,7 +12,7 @@ Servicio para envío de notificaciónes por difusión en AWS SNS
 
 ### Variables de Entorno
 ```shell
-NOTIFICACION_API_HTTP_PORT = [Puerto de ejecucion]
+NOTIFICACION_MID_HTTP_PORT = [Puerto de ejecucion]
 ```
 **NOTA:** Las variables se pueden ver en el fichero conf/app.conf y están identificadas.
 
@@ -20,31 +20,31 @@ NOTIFICACION_API_HTTP_PORT = [Puerto de ejecucion]
 ### Ejecución del Proyecto
 ```shell
 #1. Obtener el repositorio con Go
-go get github.com/udistrital/notificacion_api
+go get github.com/udistrital/notificacion_mid
 
 #2. Moverse a la carpeta del repositorio
-cd $GOPATH/src/github.com/udistrital/notificacion_api
+cd $GOPATH/src/github.com/udistrital/notificacion_mid
 
 # 3. Moverse a la rama **develop**
 git pull origin develop && git checkout develop
 
 # 4. alimentar todas las variables de entorno que utiliza el proyecto.
-NOTIFICACION_API_HTTP_PORT=8080 CONFIGURACION_SERVICE=127.0.0.1:27017 NOTIFICACION_API_SOME_VARIABLE=some_value bee run
+notificacion_mid_HTTP_PORT=8080 CONFIGURACION_SERVICE=127.0.0.1:27017 notificacion_mid_SOME_VARIABLE=some_value bee run
 ```
 
 ### Ejecución Dockerfile
 ```shell
-# docker build --tag=notificacion_api . --no-cache
-# docker run -p 80:80 notificacion_api
+# docker build --tag=notificacion_mid . --no-cache
+# docker run -p 80:80 notificacion_mid
 ```
 
 ### Ejecución docker-compose
 ```shell
 #1. Clonar el repositorio
-git clone -b develop https://github.com/udistrital/notificacion_api
+git clone -b develop https://github.com/udistrital/notificacion_mid
 
 #2. Moverse a la carpeta del repositorio
-cd notificacion_api
+cd notificacion_mid
 
 #3. Crear un fichero con el nombre **custom.env**
 touch custom.env
@@ -67,15 +67,15 @@ Pruebas unitarias
 
 | Develop | Relese 0.0.1 | Master |
 | -- | -- | -- |
-| [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/notificacion_api/status.svg?ref=refs/heads/develop)](https://hubci.portaloas.udistrital.edu.co/udistrital/notificacion_api) |  [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/notificacion_api/status.svg?ref=refs/heads/release/0.0.1)](https://hubci.portaloas.udistrital.edu.co/udistrital/notificacion_api) | [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/notificacion_api/status.svg)](https://hubci.portaloas.udistrital.edu.co/udistrital/notificacion_api) |
+| [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/notificacion_mid/status.svg?ref=refs/heads/develop)](https://hubci.portaloas.udistrital.edu.co/udistrital/notificacion_mid) |  [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/notificacion_mid/status.svg?ref=refs/heads/release/0.0.1)](https://hubci.portaloas.udistrital.edu.co/udistrital/notificacion_mid) | [![Build Status](https://hubci.portaloas.udistrital.edu.co/api/badges/udistrital/notificacion_mid/status.svg)](https://hubci.portaloas.udistrital.edu.co/udistrital/notificacion_mid) |
 
 
 ## Licencia
 
-This file is part of notificacion_api.
+This file is part of notificacion_mid.
 
-notificacion_api is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+notificacion_mid is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-notificacion_api is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+notificacion_mid is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with notificacion_api. If not, see https://www.gnu.org/licenses/.
+You should have received a copy of the GNU General Public License along with notificacion_mid. If not, see https://www.gnu.org/licenses/.

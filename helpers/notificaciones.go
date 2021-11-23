@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/aws/aws-sdk-go-v2/service/sns/types"
-	"github.com/udistrital/notificacion_api/models"
+	"github.com/udistrital/notificacion_mid/models"
 )
 
 func PublicarNotificacion(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
@@ -196,7 +196,7 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 	return *results.TopicArn, nil
 }
 
-func VerificarSuscripcion(id string, arn string) (suscrito bool, outputError map[string]interface{}) {
+func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputError map[string]interface{}) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -217,7 +217,11 @@ func VerificarSuscripcion(id string, arn string) (suscrito bool, outputError map
 		return false, outputError
 	}
 
-	logs.Debug(*results)
+	for _, resultado := range results.Subscriptions {
+		if *resultado.Endpoint == endpoint {
+			return true, nil
+		}
+	}
 	return
 
 }

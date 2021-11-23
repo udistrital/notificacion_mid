@@ -18,7 +18,7 @@ package main
 import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/plugins/cors"
-	_ "github.com/udistrital/notificacion_api/routers"
+	_ "github.com/udistrital/notificacion_mid/routers"
 	apistatus "github.com/udistrital/utils_oas/apiStatusLib"
 	"github.com/udistrital/utils_oas/customerrorv2"
 )
@@ -45,3 +45,8 @@ func main() {
 	apistatus.Init()
 	beego.Run()
 }
+
+//go:generate sh -c "echo 'package routers; import \"github.com/astaxie/beego\"; func init() {beego.BConfig.RunMode = beego.DEV}' > routers/0.go"
+//go:generate sh -c "echo 'package routers; import \"os\"; func init() {os.Exit(0)}' > routers/z.go"
+//go:generate go run $GOFILE
+//go:generate sh -c "rm routers/0.go routers/z.go"

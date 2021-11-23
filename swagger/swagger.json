@@ -185,31 +185,30 @@
                 }
             }
         },
-        "/notificaciones/suscripcion/{arn}": {
-            "get": {
+        "/notificaciones/suscripcion/": {
+            "post": {
                 "tags": [
                     "notificaciones"
                 ],
-                "description": "Lista todos los ARN de los topics disponibles",
+                "description": "Verifica la suscripcion",
                 "operationId": "NotificacionController.VerifSus",
                 "parameters": [
                     {
-                        "in": "path",
-                        "name": "arn",
-                        "description": "Arn del topic del que se quiere consultar la suscripción",
+                        "in": "body",
+                        "name": "suscripcion",
+                        "description": "Suscripcion a consultar",
                         "required": true,
-                        "type": "string"
+                        "schema": {
+                            "$ref": "#/definitions/models.ConsultaSuscripcion"
+                        }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "string,Status boolean,Message string,Data []string}",
-                        "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
-                        }
+                    "200": {
+                        "description": "{string} Mensaje eliminado"
                     },
-                    "400": {
-                        "description": "Error en parametros ingresados"
+                    "404": {
+                        "description": "not found resource"
                     }
                 }
             }
@@ -265,15 +264,15 @@
         }
     },
     "definitions": {
-        "1671.0xc0003aafc0.false": {
+        "1068.0xc0003f3170.false": {
             "title": "false",
             "type": "object"
         },
-        "2286.0xc0003ab1d0.false": {
+        "1758.0xc0003f3320.false": {
             "title": "false",
             "type": "object"
         },
-        "981.0xc0003aae10.false": {
+        "2373.0xc0003f3530.false": {
             "title": "false",
             "type": "object"
         },
@@ -320,6 +319,18 @@
             "title": "Colas",
             "type": "object"
         },
+        "models.ConsultaSuscripcion": {
+            "title": "ConsultaSuscripcion",
+            "type": "object",
+            "properties": {
+                "Endpoint": {
+                    "type": "string"
+                },
+                "TopicArn": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Endpoint": {
             "title": "Endpoint",
             "type": "object",
@@ -345,7 +356,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/981.0xc0003aae10.false"
+                    "$ref": "#/definitions/1068.0xc0003f3170.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -363,7 +374,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/1671.0xc0003aafc0.false"
+                    "$ref": "#/definitions/1758.0xc0003f3320.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -395,7 +406,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/2286.0xc0003ab1d0.false"
+                        "$ref": "#/definitions/2373.0xc0003f3530.false"
                     }
                 },
                 "Version": {

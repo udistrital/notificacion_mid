@@ -8,7 +8,7 @@
 package routers
 
 import (
-	"github.com/udistrital/notificacion_api/controllers"
+	"github.com/udistrital/notificacion_mid/controllers"
 
 	"github.com/astaxie/beego"
 )

@@ -6,8 +6,8 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
-	"github.com/udistrital/notificacion_api/helpers"
-	"github.com/udistrital/notificacion_api/models"
+	"github.com/udistrital/notificacion_mid/helpers"
+	"github.com/udistrital/notificacion_mid/models"
 )
 
 // ColasController operations for Colas
@@ -19,6 +19,7 @@ type ColasController struct {
 func (c *ColasController) URLMapping() {
 	c.Mapping("CrearCola", c.CrearCola)
 	c.Mapping("RecibirMensajes", c.RecibirMensajes)
+	c.Mapping("DeleteMessages", c.Delete)
 }
 
 // CrearCola ...
