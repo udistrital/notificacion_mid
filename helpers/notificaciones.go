@@ -25,6 +25,13 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 		listaDestinatarios = body.DestinatarioId[0]
 	}
 
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -84,6 +91,14 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 }
 
 func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string, outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/Suscribir", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -123,6 +138,14 @@ func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string
 }
 
 func ListaTopics() (topicArn []string, outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -160,6 +183,14 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 	if topic.Fifo {
 		topic.Nombre += ".fifo"
 	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -197,6 +228,14 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 }
 
 func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/VerificarSuscripcion", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -223,5 +262,36 @@ func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputErr
 		}
 	}
 	return
+}
 
+func BorrarTopic(arn string) (outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/BorrarTopic", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarTopic", "err": err, "status": "502"}
+		return outputError
+	}
+
+	client := sns.NewFromConfig(cfg)
+
+	input := &sns.DeleteTopicInput{
+		TopicArn: &arn,
+	}
+
+	_, err = client.DeleteTopic(context.TODO(), input)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarTopic", "err": err, "status": "502"}
+		return outputError
+	}
+
+	return
 }

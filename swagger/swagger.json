@@ -15,6 +15,32 @@
     },
     "basePath": "/v1",
     "paths": {
+        "/colas/cola/{cola}": {
+            "delete": {
+                "tags": [
+                    "colas"
+                ],
+                "description": "Borra la cola",
+                "operationId": "ColasController.BorrarCola",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cola",
+                        "description": "Nombre de la cola a borrar",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{string} Cola eliminada"
+                    },
+                    "404": {
+                        "description": "not found resource"
+                    }
+                }
+            }
+        },
         "/colas/crear/": {
             "post": {
                 "tags": [
@@ -42,6 +68,41 @@
                     },
                     "403": {
                         "description": "body is empty"
+                    }
+                }
+            }
+        },
+        "/colas/mensaje/{cola}": {
+            "delete": {
+                "tags": [
+                    "colas"
+                ],
+                "description": "Borra la notificación de la cola",
+                "operationId": "ColasController.BorrarMensaje",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "cola",
+                        "description": "Nombre de la cola en donde está el mensaje",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "body",
+                        "name": "mensaje",
+                        "description": "Mensaje a borrar",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Mensaje"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{string} Mensaje eliminado"
+                    },
+                    "404": {
+                        "description": "not found resource"
                     }
                 }
             }
@@ -78,41 +139,6 @@
                     },
                     "400": {
                         "description": "Error en parametros ingresados"
-                    }
-                }
-            }
-        },
-        "/colas/{cola}": {
-            "delete": {
-                "tags": [
-                    "colas"
-                ],
-                "description": "Borra la notificación de la cola",
-                "operationId": "ColasController.DeleteMessage",
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "cola",
-                        "description": "Nombre de la cola en donde está el mensaje",
-                        "required": true,
-                        "type": "string"
-                    },
-                    {
-                        "in": "body",
-                        "name": "mensaje",
-                        "description": "Mensaje a borrar",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Mensaje"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "{string} Mensaje eliminado"
-                    },
-                    "404": {
-                        "description": "not found resource"
                     }
                 }
             }
@@ -213,6 +239,32 @@
                 }
             }
         },
+        "/notificaciones/topic/": {
+            "delete": {
+                "tags": [
+                    "notificaciones"
+                ],
+                "description": "Borra el topic",
+                "operationId": "NotificacionController.BorrarTopic",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "arnTopic",
+                        "description": "Arn del topic a eliminar",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{string} Topic eliminado"
+                    },
+                    "404": {
+                        "description": "not found resource"
+                    }
+                }
+            }
+        },
         "/notificaciones/topics/": {
             "get": {
                 "tags": [
@@ -264,15 +316,15 @@
         }
     },
     "definitions": {
-        "1068.0xc0003f3170.false": {
+        "1068.0xc00043bb30.false": {
             "title": "false",
             "type": "object"
         },
-        "1758.0xc0003f3320.false": {
+        "1758.0xc00043bce0.false": {
             "title": "false",
             "type": "object"
         },
-        "2373.0xc0003f3530.false": {
+        "2373.0xc00043bef0.false": {
             "title": "false",
             "type": "object"
         },
@@ -356,7 +408,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/1068.0xc0003f3170.false"
+                    "$ref": "#/definitions/1068.0xc00043bb30.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -374,7 +426,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/1758.0xc0003f3320.false"
+                    "$ref": "#/definitions/1758.0xc00043bce0.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -406,7 +458,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/2373.0xc0003f3530.false"
+                        "$ref": "#/definitions/2373.0xc00043bef0.false"
                     }
                 },
                 "Version": {

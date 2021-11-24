@@ -19,6 +19,13 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 	var fifoBool string
 	var input *sqs.CreateQueueInput
 
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	if beego.BConfig.RunMode == "dev" || beego.BConfig.RunMode == "test" {
 		env = "test"
 	}
@@ -81,6 +88,14 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 }
 
 func RecibirMensajes(nombre string, tiempoOculto int) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/RecibirMensaje", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -131,6 +146,14 @@ func RecibirMensajes(nombre string, tiempoOculto int) (mensajes []models.Mensaje
 }
 
 func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -162,6 +185,51 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		return outputError
+	}
+
+	return
+}
+
+func BorrarCola(nombre string) (outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+		return outputError
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &nombre,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+		return outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
+	dMInput := &sqs.DeleteQueueInput{
+		QueueUrl: queueURL,
+	}
+
+	_, err = client.DeleteQueue(context.TODO(), dMInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
 		return outputError
 	}
 

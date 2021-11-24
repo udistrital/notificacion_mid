@@ -223,3 +223,36 @@ func (c *NotificacionController) VerifSus() {
 	}
 	c.ServeJSON()
 }
+
+// BorrarTopic ...
+// @Title BorrarTopic
+// @Description Borra el topic
+// @Param	arnTopic		query 	string			true		"Arn del topic a eliminar"
+// @Success 200 {string} Topic eliminado
+// @Failure 404 not found resource
+// @router /topic/ [delete]
+func (c *NotificacionController) BorrarTopic() {
+	arn := c.GetString("arnTopic")
+
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarTopic/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+
+	if err := helpers.BorrarTopic(arn); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Topic eliminado"}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
