@@ -8,8 +8,8 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 
-	"github.com/udistrital/notificacion_api/helpers"
-	"github.com/udistrital/notificacion_api/models"
+	"github.com/udistrital/notificacion_mid/helpers"
+	"github.com/udistrital/notificacion_mid/models"
 )
 
 // NotificacionController operations for Notificacion
@@ -189,13 +189,13 @@ func (c *NotificacionController) GetTopics() {
 
 // VerifSus ...
 // @Title VerifSus
-// @Description Lista todos los ARN de los topics disponibles
-// @Param	arn	path	string	true	"Arn del topic del que se quiere consultar la suscripción"
-// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string}
-// @Failure 400 Error en parametros ingresados
-// @router /suscripcion/:arn [get]
+// @Description Verifica la suscripcion
+// @Param	suscripcion		body 	models.ConsultaSuscripcion	true		"Suscripcion a consultar"
+// @Success 200 {string} Mensaje eliminado
+// @Failure 404 not found resource
+// @router /suscripcion/ [post]
 func (c *NotificacionController) VerifSus() {
-	arn := "arn:aws:sns:us-east-1:505909609706:" + c.GetString(":TopicArn")
+	var consulta models.ConsultaSuscripcion
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -211,9 +211,46 @@ func (c *NotificacionController) VerifSus() {
 		}
 	}()
 
-	if respuesta, err := helpers.VerificarSuscripcion(arn, c.GetString(":id")); err == nil {
+	json.Unmarshal(c.Ctx.Input.RequestBody, &consulta)
+	if consulta.TopicArn == "" || consulta.Endpoint == "" {
+		panic(map[string]interface{}{"funcion": "VerifSus", "err": "Error en parámetros de ingresos", "status": "400"})
+	}
+	if respuesta, err := helpers.VerificarSuscripcion(consulta.TopicArn, consulta.Endpoint); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
+// BorrarTopic ...
+// @Title BorrarTopic
+// @Description Borra el topic
+// @Param	arnTopic		query 	string			true		"Arn del topic a eliminar"
+// @Success 200 {string} Topic eliminado
+// @Failure 404 not found resource
+// @router /topic/ [delete]
+func (c *NotificacionController) BorrarTopic() {
+	arn := c.GetString("arnTopic")
+
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarTopic/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+
+	if err := helpers.BorrarTopic(arn); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Topic eliminado"}
 	} else {
 		panic(err)
 	}

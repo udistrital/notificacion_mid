@@ -4,51 +4,76 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"github.com/udistrital/notificacion_api/models"
+	"github.com/udistrital/notificacion_mid/models"
 )
 
 func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}) {
 	var env string = "prod"
+	var fifoBool string
+	var input *sqs.CreateQueueInput
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
 
 	if beego.BConfig.RunMode == "dev" || beego.BConfig.RunMode == "test" {
 		env = "test"
 	}
+	ValoresDefault(&cola)
+	policy, _ := json.Marshal(cola.Politica)
 
 	if cola.EsFifo {
 		cola.Nombre += ".fifo"
+		input = &sqs.CreateQueueInput{
+			QueueName: &cola.Nombre,
+			Attributes: map[string]string{
+				"DelaySeconds":                  strconv.Itoa(cola.Retraso),
+				"MessageRetentionPeriod":        strconv.Itoa(cola.Retencion),
+				"MaximumMessageSize":            strconv.Itoa(cola.TamañoMaximo),
+				"ReceiveMessageWaitTimeSeconds": strconv.Itoa(cola.TiempoEspera),
+				"VisibilityTimeout":             strconv.Itoa(cola.EsperaVisibilidad),
+				"Policy":                        string(policy),
+				"FifoQueue":                     fifoBool,
+			},
+			Tags: map[string]string{
+				"Name":        cola.Nombre,
+				"Environment": env,
+			},
+		}
+	} else {
+		input = &sqs.CreateQueueInput{
+			QueueName: &cola.Nombre,
+			Attributes: map[string]string{
+				"DelaySeconds":                  strconv.Itoa(cola.Retraso),
+				"MessageRetentionPeriod":        strconv.Itoa(cola.Retencion),
+				"MaximumMessageSize":            strconv.Itoa(cola.TamañoMaximo),
+				"ReceiveMessageWaitTimeSeconds": strconv.Itoa(cola.TiempoEspera),
+				"VisibilityTimeout":             strconv.Itoa(cola.EsperaVisibilidad),
+				"Policy":                        string(policy),
+			},
+			Tags: map[string]string{
+				"Name":        cola.Nombre,
+				"Environment": env,
+			},
+		}
 	}
-	ValoresDefault(&cola)
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err, "status": "502"}
 		return "", outputError
 	}
-
 	client := sqs.NewFromConfig(cfg)
-	policy, _ := json.Marshal(cola.Politica)
-	input := &sqs.CreateQueueInput{
-		QueueName: &cola.Nombre,
-		Attributes: map[string]string{
-			"DelaySeconds":                  strconv.Itoa(cola.Retraso),
-			"MessageRetentionPeriod":        strconv.Itoa(cola.Retencion),
-			"MaximumMessageSize":            strconv.Itoa(cola.TamañoMaximo),
-			"ReceiveMessageWaitTimeSeconds": strconv.Itoa(cola.TiempoEspera),
-			"VisibilityTimeout":             strconv.Itoa(cola.EsperaVisibilidad),
-			"Policy":                        string(policy),
-			"FifoQueue":                     strconv.FormatBool(cola.EsFifo),
-		},
-		Tags: map[string]string{
-			"Name":        cola.Nombre,
-			"Environment": env,
-		},
-	}
 
 	result, err := client.CreateQueue(context.TODO(), input)
 	if err != nil {
@@ -56,10 +81,21 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 		outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err, "status": "502"}
 		return "", outputError
 	}
-	return *result.QueueUrl, nil
+	s1 := strings.Split(*result.QueueUrl, "/")
+	s2 := strings.Split(s1[2], ".")
+	arn = "arn:aws:sqs:" + s2[1] + ":" + s1[3] + ":" + s1[4]
+	return
 }
 
 func RecibirMensajes(nombre string, tiempoOculto int) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/RecibirMensaje", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -110,6 +146,14 @@ func RecibirMensajes(nombre string, tiempoOculto int) (mensajes []models.Mensaje
 }
 
 func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -141,6 +185,51 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		return outputError
+	}
+
+	return
+}
+
+func BorrarCola(nombre string) (outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+		return outputError
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &nombre,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+		return outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
+	dMInput := &sqs.DeleteQueueInput{
+		QueueUrl: queueURL,
+	}
+
+	_, err = client.DeleteQueue(context.TODO(), dMInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
 		return outputError
 	}
 

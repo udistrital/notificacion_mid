@@ -11,27 +11,21 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 basePath: /v1
 paths:
-  /colas/{cola}:
+  /colas/cola/{cola}:
     delete:
       tags:
       - colas
-      description: Borra la notificación de la cola
-      operationId: ColasController.DeleteMessage
+      description: Borra la cola
+      operationId: ColasController.BorrarCola
       parameters:
       - in: path
         name: cola
-        description: Nombre de la cola en donde está el mensaje
+        description: Nombre de la cola a borrar
         required: true
         type: string
-      - in: body
-        name: mensaje
-        description: Mensaje a borrar
-        required: true
-        schema:
-          $ref: '#/definitions/models.Mensaje'
       responses:
         "200":
-          description: '{string} Mensaje eliminado'
+          description: '{string} Cola eliminada'
         "404":
           description: not found resource
   /colas/crear/:
@@ -54,6 +48,29 @@ paths:
             $ref: '#/definitions/models.Colas'
         "403":
           description: body is empty
+  /colas/mensaje/{cola}:
+    delete:
+      tags:
+      - colas
+      description: Borra la notificación de la cola
+      operationId: ColasController.BorrarMensaje
+      parameters:
+      - in: path
+        name: cola
+        description: Nombre de la cola en donde está el mensaje
+        required: true
+        type: string
+      - in: body
+        name: mensaje
+        description: Mensaje a borrar
+        required: true
+        schema:
+          $ref: '#/definitions/models.Mensaje'
+      responses:
+        "200":
+          description: '{string} Mensaje eliminado'
+        "404":
+          description: not found resource
   /colas/mensajes:
     get:
       tags:
@@ -124,25 +141,41 @@ paths:
             $ref: '#/definitions/map[string]interface{Success'
         "400":
           description: Error en parametros ingresados
-  /notificaciones/suscripcion/{arn}:
-    get:
+  /notificaciones/suscripcion/:
+    post:
       tags:
       - notificaciones
-      description: Lista todos los ARN de los topics disponibles
+      description: Verifica la suscripcion
       operationId: NotificacionController.VerifSus
       parameters:
-      - in: path
-        name: arn
-        description: Arn del topic del que se quiere consultar la suscripción
+      - in: body
+        name: suscripcion
+        description: Suscripcion a consultar
+        required: true
+        schema:
+          $ref: '#/definitions/models.ConsultaSuscripcion'
+      responses:
+        "200":
+          description: '{string} Mensaje eliminado'
+        "404":
+          description: not found resource
+  /notificaciones/topic/:
+    delete:
+      tags:
+      - notificaciones
+      description: Borra el topic
+      operationId: NotificacionController.BorrarTopic
+      parameters:
+      - in: query
+        name: arnTopic
+        description: Arn del topic a eliminar
         required: true
         type: string
       responses:
-        "201":
-          description: string,Status boolean,Message string,Data []string}
-          schema:
-            $ref: '#/definitions/map[string]interface{Success'
-        "400":
-          description: Error en parametros ingresados
+        "200":
+          description: '{string} Topic eliminado'
+        "404":
+          description: not found resource
   /notificaciones/topics/:
     get:
       tags:
@@ -176,13 +209,13 @@ paths:
         "400":
           description: Error en parametros ingresados
 definitions:
-  981.0xc0003aae10.false:
+  1068.0xc00043bb30.false:
     title: "false"
     type: object
-  1671.0xc0003aafc0.false:
+  1758.0xc00043bce0.false:
     title: "false"
     type: object
-  2286.0xc0003ab1d0.false:
+  2373.0xc00043bef0.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -216,6 +249,14 @@ definitions:
   models.Colas:
     title: Colas
     type: object
+  models.ConsultaSuscripcion:
+    title: ConsultaSuscripcion
+    type: object
+    properties:
+      Endpoint:
+        type: string
+      TopicArn:
+        type: string
   models.Endpoint:
     title: Endpoint
     type: object
@@ -234,7 +275,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/981.0xc0003aae10.false'
+        $ref: '#/definitions/1068.0xc00043bb30.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -246,7 +287,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1671.0xc0003aafc0.false'
+        $ref: '#/definitions/1758.0xc00043bce0.false'
       DestinatarioId:
         type: array
         items:
@@ -268,7 +309,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2286.0xc0003ab1d0.false'
+          $ref: '#/definitions/2373.0xc00043bef0.false'
       Version:
         type: string
   models.Suscripcion:

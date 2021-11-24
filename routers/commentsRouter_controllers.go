@@ -7,16 +7,16 @@ import (
 
 func init() {
 
-    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"],
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
         beego.ControllerComments{
-            Method: "Delete",
-            Router: "/:cola",
+            Method: "BorrarCola",
+            Router: "/cola/:cola",
             AllowHTTPMethods: []string{"delete"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"],
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
         beego.ControllerComments{
             Method: "CrearCola",
             Router: "/crear/",
@@ -25,7 +25,16 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:ColasController"],
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
+        beego.ControllerComments{
+            Method: "BorrarMensaje",
+            Router: "/mensaje/:cola",
+            AllowHTTPMethods: []string{"delete"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
         beego.ControllerComments{
             Method: "RecibirMensajes",
             Router: "/mensajes",
@@ -34,7 +43,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"],
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"],
         beego.ControllerComments{
             Method: "PostOneNotif",
             Router: "/enviar/",
@@ -43,7 +52,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"],
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"],
         beego.ControllerComments{
             Method: "Subscribe",
             Router: "/suscribir/",
@@ -52,20 +61,38 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"],
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"],
         beego.ControllerComments{
-            Method: "GetTopics",
-            Router: "/topics/",
-            AllowHTTPMethods: []string{"get"},
+            Method: "VerifSus",
+            Router: "/suscripcion/",
+            AllowHTTPMethods: []string{"post"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_api/controllers:NotificacionController"],
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"],
+        beego.ControllerComments{
+            Method: "BorrarTopic",
+            Router: "/topic/",
+            AllowHTTPMethods: []string{"delete"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"],
         beego.ControllerComments{
             Method: "CreateTopic",
             Router: "/topics/",
             AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"],
+        beego.ControllerComments{
+            Method: "GetTopics",
+            Router: "/topics/",
+            AllowHTTPMethods: []string{"get"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})

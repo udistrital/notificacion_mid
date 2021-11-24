@@ -6,8 +6,8 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
-	"github.com/udistrital/notificacion_api/helpers"
-	"github.com/udistrital/notificacion_api/models"
+	"github.com/udistrital/notificacion_mid/helpers"
+	"github.com/udistrital/notificacion_mid/models"
 )
 
 // ColasController operations for Colas
@@ -19,6 +19,8 @@ type ColasController struct {
 func (c *ColasController) URLMapping() {
 	c.Mapping("CrearCola", c.CrearCola)
 	c.Mapping("RecibirMensajes", c.RecibirMensajes)
+	c.Mapping("BorrarMensaje", c.BorrarMensaje)
+	c.Mapping("BorrarCola", c.BorrarCola)
 }
 
 // CrearCola ...
@@ -101,15 +103,15 @@ func (c *ColasController) RecibirMensajes() {
 	c.ServeJSON()
 }
 
-// DeleteMessage ...
-// @Title DeleteMessage
+// BorrarMensaje ...
+// @Title BorrarMensaje
 // @Description Borra la notificación de la cola
 // @Param	cola		path 	string			true		"Nombre de la cola en donde está el mensaje"
 // @Param	mensaje		body 	models.Mensaje	true		"Mensaje a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /:cola [delete]
-func (c *ColasController) Delete() {
+// @router /mensaje/:cola [delete]
+func (c *ColasController) BorrarMensaje() {
 	colaStr := c.Ctx.Input.Param(":cola")
 	var mensaje models.Mensaje
 
@@ -135,6 +137,39 @@ func (c *ColasController) Delete() {
 	if err := helpers.BorrarMensaje(colaStr, mensaje); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Mensaje eliminado"}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
+// BorrarCola ...
+// @Title BorrarCola
+// @Description Borra la cola
+// @Param	cola		path 	string			true		"Nombre de la cola a borrar"
+// @Success 200 {string} Cola eliminada
+// @Failure 502 Error en borrado de cola
+// @router /cola/:cola [delete]
+func (c *ColasController) BorrarCola() {
+	colaStr := c.Ctx.Input.Param(":cola")
+
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarCola/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+
+	if err := helpers.BorrarCola(colaStr); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Cola eliminada"}
 	} else {
 		panic(err)
 	}
