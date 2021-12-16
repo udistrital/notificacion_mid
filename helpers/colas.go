@@ -87,7 +87,7 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 	return
 }
 
-func RecibirMensajes(nombre string, tiempoOculto int) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []models.Mensaje, outputError map[string]interface{}) {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -123,7 +123,7 @@ func RecibirMensajes(nombre string, tiempoOculto int) (mensajes []models.Mensaje
 			string(types.QueueAttributeNameAll),
 		},
 		QueueUrl:            queueURL,
-		MaxNumberOfMessages: 10,
+		MaxNumberOfMessages: int32(numMax),
 		VisibilityTimeout:   int32(tiempoOculto),
 	}
 
