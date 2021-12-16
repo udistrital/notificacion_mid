@@ -66,6 +66,7 @@ func (c *ColasController) CrearCola() {
 // @Description Lista hasta 10 mensajes en cola
 // @Param	nombre			query 	string	true	"Nombre de la cola"
 // @Param	tiempoOculto	query 	int		false	"El tiempo en segundos que un mensaje recibido se ocultará en la cola"
+// @Param	numMax			query 	int		false	"Numero máximo de mensajes que se pueden recibir (1-10) Por defecto, su valor es 1"
 // @Success 201 {object} models.Mensaje
 // @Failure 400 Error en parametros ingresados
 // @router /mensajes [get]
@@ -94,7 +95,17 @@ func (c *ColasController) RecibirMensajes() {
 		panic(map[string]interface{}{"funcion": "RecibirMensaje", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if respuesta, err := helpers.RecibirMensajes(c.GetString("nombre"), tiempoOculto); err == nil {
+	numMaxStr := c.GetString("numMax")
+	if tiempoOcultoStr == "" {
+		tiempoOcultoStr = "1"
+	}
+
+	numMax, err := strconv.Atoi(numMaxStr)
+	if err != nil {
+		panic(map[string]interface{}{"funcion": "RecibirMensaje", "err": "Error en parámetros de ingresos", "status": "400"})
+	}
+
+	if respuesta, err := helpers.RecibirMensajes(c.GetString("nombre"), tiempoOculto, numMax); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {

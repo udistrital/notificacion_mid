@@ -20,7 +20,7 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 	tipoLista := "String.Array"
 	var listaDestinatarios string
 	if len(body.DestinatarioId) > 1 {
-		listaDestinatarios = "[" + strings.Join(body.DestinatarioId, ",") + "]"
+		listaDestinatarios = "[\"" + strings.Join(body.DestinatarioId, "\",\"") + "\"]"
 	} else {
 		listaDestinatarios = body.DestinatarioId[0]
 	}
@@ -120,7 +120,7 @@ func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string
 			ReturnSubscriptionArn: true,
 			TopicArn:              &body.ArnTopic,
 			Attributes: map[string]string{
-				"FilterPolicy": "{\"Destinatario\":[" + subscriptor.Id + "]}",
+				"FilterPolicy": "{\"Destinatario\":[\"" + subscriptor.Id + "\"]}",
 			},
 		}
 
