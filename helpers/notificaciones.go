@@ -22,7 +22,7 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 	if len(body.DestinatarioId) > 1 {
 		listaDestinatarios = "[\"" + strings.Join(body.DestinatarioId, "\",\"") + "\"]"
 	} else {
-		listaDestinatarios = body.DestinatarioId[0]
+		listaDestinatarios = "\"" + body.DestinatarioId[0] + "\""
 	}
 
 	defer func() {
