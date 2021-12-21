@@ -36,6 +36,15 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
         beego.ControllerComments{
+            Method: "BorrarMensajeId",
+            Router: "/mensaje/:cola/:id",
+            AllowHTTPMethods: []string{"delete"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
+        beego.ControllerComments{
             Method: "RecibirMensajes",
             Router: "/mensajes",
             AllowHTTPMethods: []string{"get"},

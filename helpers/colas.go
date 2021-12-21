@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
@@ -274,4 +275,82 @@ func ValoresDefault(cola *models.Cola) {
 			},
 		}
 	}
+}
+
+func BorrarMensajeId(cola string, id string) (outputError map[string]interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	var mensajes []models.Mensaje
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+		return outputError
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &cola,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+		return outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
+	input := &sqs.ReceiveMessageInput{
+		MessageAttributeNames: []string{
+			string(types.QueueAttributeNameAll),
+		},
+		QueueUrl:            queueURL,
+		MaxNumberOfMessages: 10,
+		VisibilityTimeout:   2,
+	}
+	for {
+		result, err := client.ReceiveMessage(context.TODO(), input)
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+			return outputError
+		}
+		if len(result.Messages) > 0 {
+			for _, m := range result.Messages {
+				var body map[string]interface{}
+				json.Unmarshal([]byte(*m.Body), &body)
+				mensajes = append(mensajes, models.Mensaje{
+					Attributes:    m.Attributes,
+					Body:          body,
+					ReceiptHandle: *m.ReceiptHandle,
+				})
+			}
+		} else {
+			break
+		}
+	}
+
+	for _, m := range mensajes {
+		atributos := m.Body["MessageAttributes"].(map[string]interface{})
+		remitente := atributos["Remitente"].(map[string]interface{})
+		if remitente["Value"] == id {
+			err := BorrarMensaje(cola, m)
+			if err != nil {
+				logs.Error(err)
+				outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+				return outputError
+			}
+		}
+	}
+	time.Sleep(2 * time.Second)
+	return
 }
