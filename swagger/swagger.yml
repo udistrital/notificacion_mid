@@ -26,8 +26,8 @@ paths:
       responses:
         "200":
           description: '{string} Cola eliminada'
-        "404":
-          description: not found resource
+        "502":
+          description: Error en borrado de cola
   /colas/crear/:
     post:
       tags:
@@ -71,6 +71,28 @@ paths:
           description: '{string} Mensaje eliminado'
         "404":
           description: not found resource
+  /colas/mensaje/{cola}/{id}:
+    delete:
+      tags:
+      - colas
+      description: Borra la notificación de la cola según el id de remitente especificado
+      operationId: ColasController.BorrarMensajeId
+      parameters:
+      - in: path
+        name: cola
+        description: Nombre de la cola en donde está el mensaje
+        required: true
+        type: string
+      - in: path
+        name: id
+        description: Id de remitente de mensajes a borrar
+        required: true
+        type: string
+      responses:
+        "200":
+          description: '{string} Mensaje eliminado'
+        "404":
+          description: not found resource
   /colas/mensajes:
     get:
       tags:
@@ -87,6 +109,12 @@ paths:
         name: tiempoOculto
         description: El tiempo en segundos que un mensaje recibido se ocultará en
           la cola
+        type: integer
+        format: int64
+      - in: query
+        name: numMax
+        description: Numero máximo de mensajes que se pueden recibir (1-10) Por defecto,
+          su valor es 1
         type: integer
         format: int64
       responses:
@@ -209,13 +237,13 @@ paths:
         "400":
           description: Error en parametros ingresados
 definitions:
-  1068.0xc00043bb30.false:
+  1068.0xc0004f4300.false:
     title: "false"
     type: object
-  1758.0xc00043bce0.false:
+  1758.0xc0004f44b0.false:
     title: "false"
     type: object
-  2373.0xc00043bef0.false:
+  2373.0xc0004f46c0.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -275,7 +303,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/1068.0xc00043bb30.false'
+        $ref: '#/definitions/1068.0xc0004f4300.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -287,7 +315,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1758.0xc00043bce0.false'
+        $ref: '#/definitions/1758.0xc0004f44b0.false'
       DestinatarioId:
         type: array
         items:
@@ -309,7 +337,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2373.0xc00043bef0.false'
+          $ref: '#/definitions/2373.0xc0004f46c0.false'
       Version:
         type: string
   models.Suscripcion:

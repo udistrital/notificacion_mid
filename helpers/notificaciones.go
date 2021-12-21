@@ -120,7 +120,7 @@ func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string
 			ReturnSubscriptionArn: true,
 			TopicArn:              &body.ArnTopic,
 			Attributes: map[string]string{
-				"FilterPolicy": "{\"Destinatario\":[\"" + subscriptor.Id + "\"]}",
+				"FilterPolicy": "{\"Destinatario\":[\"" + subscriptor.Id + "\",\"todos\"]}",
 			},
 		}
 

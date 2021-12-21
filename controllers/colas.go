@@ -154,6 +154,45 @@ func (c *ColasController) BorrarMensaje() {
 	c.ServeJSON()
 }
 
+// BorrarMensajeId ...
+// @Title BorrarMensajeId
+// @Description Borra la notificación de la cola según el id de remitente especificado
+// @Param	cola		path 	string			true		"Nombre de la cola en donde está el mensaje"
+// @Param	id			path 	string			true		"Id de remitente de mensajes a borrar"
+// @Success 200 {string} Mensaje eliminado
+// @Failure 404 not found resource
+// @router /mensaje/:cola/:id [delete]
+func (c *ColasController) BorrarMensajeId() {
+	colaStr := c.Ctx.Input.Param(":cola")
+	idStr := c.Ctx.Input.Param(":id")
+
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarMensajeId/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+
+	if colaStr == "" || idStr == "" {
+		panic(map[string]interface{}{"funcion": "BorrarMensajeId", "err": "Error en parámetros de ingresos", "status": "400"})
+	}
+
+	if err := helpers.BorrarMensajeId(colaStr, idStr); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Mensajes eliminados"}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
 // BorrarCola ...
 // @Title BorrarCola
 // @Description Borra la cola
