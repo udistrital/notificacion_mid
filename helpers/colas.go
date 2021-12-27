@@ -277,10 +277,10 @@ func ValoresDefault(cola *models.Cola) {
 	}
 }
 
-func BorrarMensajeId(cola string, id string) (outputError map[string]interface{}) {
+func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
-			outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+			outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
 			panic(outputError)
 		}
 	}()
@@ -290,20 +290,20 @@ func BorrarMensajeId(cola string, id string) (outputError map[string]interface{}
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
 		return outputError
 	}
 
 	client := sqs.NewFromConfig(cfg)
 
 	qUInput := &sqs.GetQueueUrlInput{
-		QueueName: &cola,
+		QueueName: &filtro.NombreCola,
 	}
 
 	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
 		return outputError
 	}
 
@@ -321,7 +321,7 @@ func BorrarMensajeId(cola string, id string) (outputError map[string]interface{}
 		result, err := client.ReceiveMessage(context.TODO(), input)
 		if err != nil {
 			logs.Error(err)
-			outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
+			outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
 			return outputError
 		}
 		if len(result.Messages) > 0 {
@@ -341,13 +341,14 @@ func BorrarMensajeId(cola string, id string) (outputError map[string]interface{}
 
 	for _, m := range mensajes {
 		atributos := m.Body["MessageAttributes"].(map[string]interface{})
-		remitente := atributos["Remitente"].(map[string]interface{})
-		if remitente["Value"] == id {
-			err := BorrarMensaje(cola, m)
-			if err != nil {
-				logs.Error(err)
-				outputError = map[string]interface{}{"funcion": "/BorrarMensajeId", "err": err, "status": "502"}
-				return outputError
+		for key, value := range atributos {
+			if Contains(filtro.Filtro[key], value.(map[string]interface{})) {
+				err := BorrarMensaje(filtro.NombreCola, m)
+				if err != nil {
+					logs.Error(err)
+					outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
+					return outputError
+				}
 			}
 		}
 	}

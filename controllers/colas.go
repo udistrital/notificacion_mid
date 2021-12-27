@@ -20,6 +20,7 @@ func (c *ColasController) URLMapping() {
 	c.Mapping("CrearCola", c.CrearCola)
 	c.Mapping("RecibirMensajes", c.RecibirMensajes)
 	c.Mapping("BorrarMensaje", c.BorrarMensaje)
+	c.Mapping("BorrarMensajeFiltro", c.BorrarMensajeFiltro)
 	c.Mapping("BorrarCola", c.BorrarCola)
 }
 
@@ -125,7 +126,6 @@ func (c *ColasController) RecibirMensajes() {
 func (c *ColasController) BorrarMensaje() {
 	colaStr := c.Ctx.Input.Param(":cola")
 	var mensaje models.Mensaje
-
 	defer func() {
 		if err := recover(); err != nil {
 			logs.Error(err)
@@ -154,23 +154,21 @@ func (c *ColasController) BorrarMensaje() {
 	c.ServeJSON()
 }
 
-// BorrarMensajeId ...
-// @Title BorrarMensajeId
-// @Description Borra la notificación de la cola según el id de remitente especificado
-// @Param	cola		path 	string			true		"Nombre de la cola en donde está el mensaje"
-// @Param	id			path 	string			true		"Id de remitente de mensajes a borrar"
+// BorrarMensajeFiltro ...
+// @Title BorrarMensajeFiltro
+// @Description Borra la notificación de la cola según el key y el valor ingresados en el body
+// @Param	filtro		body 	models.Filtro		true		"Filtro de los mensajes a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /mensaje/:cola/:id [delete]
-func (c *ColasController) BorrarMensajeId() {
-	colaStr := c.Ctx.Input.Param(":cola")
-	idStr := c.Ctx.Input.Param(":id")
+// @router /mensaje [delete]
+func (c *ColasController) BorrarMensajeFiltro() {
+	var filtro models.Filtro
 
 	defer func() {
 		if err := recover(); err != nil {
 			logs.Error(err)
 			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarMensajeId/" + (localError["funcion"]).(string))
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarMensajeFiltro/" + (localError["funcion"]).(string))
 			c.Data["data"] = (localError["err"])
 			if status, ok := localError["status"]; ok {
 				c.Abort(status.(string))
@@ -180,11 +178,13 @@ func (c *ColasController) BorrarMensajeId() {
 		}
 	}()
 
-	if colaStr == "" || idStr == "" {
-		panic(map[string]interface{}{"funcion": "BorrarMensajeId", "err": "Error en parámetros de ingresos", "status": "400"})
+	json.Unmarshal(c.Ctx.Input.RequestBody, &filtro)
+
+	if filtro.NombreCola == "" {
+		panic(map[string]interface{}{"funcion": "BorrarMensajeFiltro", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if err := helpers.BorrarMensajeId(colaStr, idStr); err == nil {
+	if err := helpers.BorrarMensajeFiltro(filtro); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Mensajes eliminados"}
 	} else {
