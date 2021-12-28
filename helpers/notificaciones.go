@@ -172,13 +172,13 @@ func ListaTopics() (topicArn []string, outputError map[string]interface{}) {
 
 func CrearTopic(topic models.Topic) (arn string, outputError map[string]interface{}) {
 	var tags []types.Tag
-	var key0 string = "Name"
-	var key1 string = "Environment"
+	var key0 string = "name"
+	var key1 string = "environment"
 	var val1 string = "prod"
 
-	if beego.BConfig.RunMode == "dev" || beego.BConfig.RunMode == "test" {
-		val1 = "test"
-	}
+	val1 = beego.BConfig.RunMode
+
+	topic.Nombre = beego.BConfig.RunMode + "-" + topic.Nombre
 
 	if topic.Fifo {
 		topic.Nombre += ".fifo"
