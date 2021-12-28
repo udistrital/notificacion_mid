@@ -165,7 +165,9 @@ func ListaTopics() (topicArn []string, outputError map[string]interface{}) {
 	}
 
 	for _, t := range results.Topics {
-		topicArn = append(topicArn, *t.TopicArn)
+		if strings.Contains(*t.TopicArn, beego.BConfig.RunMode+"-") {
+			topicArn = append(topicArn, *t.TopicArn)
+		}
 	}
 	return
 }
