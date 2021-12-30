@@ -60,12 +60,12 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 
 	var input *sns.PublishInput
 
-	if strings.Contains(body.Arn, ".fifo") {
+	if strings.Contains(body.ArnTopic, ".fifo") {
 		input = &sns.PublishInput{
 			Message:                &body.Mensaje,
 			MessageAttributes:      atributos,
 			Subject:                &body.Asunto,
-			TopicArn:               &body.Arn,
+			TopicArn:               &body.ArnTopic,
 			MessageDeduplicationId: &body.IdDeduplicacion,
 			MessageGroupId:         &body.IdGrupoMensaje,
 		}
@@ -74,7 +74,7 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 			Message:           &body.Mensaje,
 			MessageAttributes: atributos,
 			Subject:           &body.Asunto,
-			TopicArn:          &body.Arn,
+			TopicArn:          &body.ArnTopic,
 		}
 	}
 
@@ -182,7 +182,7 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 
 	topic.Nombre = beego.BConfig.RunMode + "-" + topic.Nombre
 
-	if topic.Fifo {
+	if topic.EsFifo {
 		topic.Nombre += ".fifo"
 	}
 
@@ -214,7 +214,7 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 		Name: &topic.Nombre,
 		Attributes: map[string]string{
 			"DisplayName": topic.Display,
-			"FifoTopic":   strconv.FormatBool(topic.Fifo),
+			"FifoTopic":   strconv.FormatBool(topic.EsFifo),
 		},
 		Tags: tags,
 	}

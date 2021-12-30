@@ -34,9 +34,9 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 	policy, _ := json.Marshal(cola.Politica)
 
 	if cola.EsFifo {
-		cola.Nombre += ".fifo"
+		cola.NombreCola += ".fifo"
 		input = &sqs.CreateQueueInput{
-			QueueName: &cola.Nombre,
+			QueueName: &cola.NombreCola,
 			Attributes: map[string]string{
 				"DelaySeconds":                  strconv.Itoa(cola.Retraso),
 				"MessageRetentionPeriod":        strconv.Itoa(cola.Retencion),
@@ -47,13 +47,13 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 				"FifoQueue":                     fifoBool,
 			},
 			Tags: map[string]string{
-				"Name":        cola.Nombre,
+				"Name":        cola.NombreCola,
 				"Environment": env,
 			},
 		}
 	} else {
 		input = &sqs.CreateQueueInput{
-			QueueName: &cola.Nombre,
+			QueueName: &cola.NombreCola,
 			Attributes: map[string]string{
 				"DelaySeconds":                  strconv.Itoa(cola.Retraso),
 				"MessageRetentionPeriod":        strconv.Itoa(cola.Retencion),
@@ -63,7 +63,7 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 				"Policy":                        string(policy),
 			},
 			Tags: map[string]string{
-				"Name":        cola.Nombre,
+				"Name":        cola.NombreCola,
 				"Environment": env,
 			},
 		}

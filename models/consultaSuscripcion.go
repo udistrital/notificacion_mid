@@ -1,6 +1,6 @@
 package models
 
 type ConsultaSuscripcion struct {
-	TopicArn string
+	ArnTopic string
 	Endpoint string
 }

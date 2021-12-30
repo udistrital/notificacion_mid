@@ -20,7 +20,7 @@ type Notificacion struct {
 
 	//Identifica el ARN del topic creado en SNS, para más
 	//información sobre los topics visitar (https://docs.aws.amazon.com/sns/latest/dg/sns-create-topic.html)
-	Arn string
+	ArnTopic string
 
 	//En colas fifo, se identifica cada mensaje con un id para que no se repita la misma notificacion varias veces,
 	//comparando los id de deduplicacion
