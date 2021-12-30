@@ -16,7 +16,7 @@ import (
 )
 
 func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}) {
-	var env string = "prod"
+	var env string = beego.BConfig.RunMode
 	var fifoBool string
 	var input *sqs.CreateQueueInput
 
@@ -26,17 +26,13 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 			panic(outputError)
 		}
 	}()
-
-	if beego.BConfig.RunMode == "dev" || beego.BConfig.RunMode == "test" {
-		env = "test"
-	}
 	ValoresDefault(&cola)
 	policy, _ := json.Marshal(cola.Politica)
 
 	if cola.EsFifo {
-		cola.Nombre += ".fifo"
+		cola.NombreCola += ".fifo"
 		input = &sqs.CreateQueueInput{
-			QueueName: &cola.Nombre,
+			QueueName: &cola.NombreCola,
 			Attributes: map[string]string{
 				"DelaySeconds":                  strconv.Itoa(cola.Retraso),
 				"MessageRetentionPeriod":        strconv.Itoa(cola.Retencion),
@@ -47,13 +43,13 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 				"FifoQueue":                     fifoBool,
 			},
 			Tags: map[string]string{
-				"Name":        cola.Nombre,
+				"Name":        cola.NombreCola,
 				"Environment": env,
 			},
 		}
 	} else {
 		input = &sqs.CreateQueueInput{
-			QueueName: &cola.Nombre,
+			QueueName: &cola.NombreCola,
 			Attributes: map[string]string{
 				"DelaySeconds":                  strconv.Itoa(cola.Retraso),
 				"MessageRetentionPeriod":        strconv.Itoa(cola.Retencion),
@@ -63,7 +59,7 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 				"Policy":                        string(policy),
 			},
 			Tags: map[string]string{
-				"Name":        cola.Nombre,
+				"Name":        cola.NombreCola,
 				"Environment": env,
 			},
 		}
@@ -238,6 +234,7 @@ func BorrarCola(nombre string) (outputError map[string]interface{}) {
 }
 
 func ValoresDefault(cola *models.Cola) {
+	cola.NombreCola = beego.BConfig.RunMode + "-" + cola.NombreCola
 	if cola.EsperaVisibilidad == 0 {
 		cola.EsperaVisibilidad = 30
 	}
@@ -265,7 +262,7 @@ func ValoresDefault(cola *models.Cola) {
 				Resource: "arn:aws:sqs:*",
 				Condition: map[string]map[string]string{
 					"ArnLike": {
-						"aws:SourceArn": "arn:aws:sns:us-east-1:*:*",
+						"aws:SourceArn": "arn:aws:sns:us-east-1:*:" + beego.BConfig.RunMode + "-*",
 					},
 				},
 				Principal: struct{ AWS string }{

@@ -1,7 +1,7 @@
 package models
 
 type Cola struct {
-	Nombre            string
+	NombreCola        string
 	EsFifo            bool
 	EsperaVisibilidad int
 	Retencion         int

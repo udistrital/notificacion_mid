@@ -49,7 +49,7 @@ func (c *ColasController) CrearCola() {
 	}()
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &cola)
-	if cola.Nombre == "" {
+	if cola.NombreCola == "" {
 		panic(map[string]interface{}{"funcion": "CrearCola", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
@@ -122,7 +122,7 @@ func (c *ColasController) RecibirMensajes() {
 // @Param	mensaje		body 	models.Mensaje	true		"Mensaje a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /mensaje/:cola [delete]
+// @router /mensajes/:cola [delete]
 func (c *ColasController) BorrarMensaje() {
 	colaStr := c.Ctx.Input.Param(":cola")
 	var mensaje models.Mensaje
@@ -160,7 +160,7 @@ func (c *ColasController) BorrarMensaje() {
 // @Param	filtro		body 	models.Filtro		true		"Filtro de los mensajes a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /mensaje [delete]
+// @router /mensajes [delete]
 func (c *ColasController) BorrarMensajeFiltro() {
 	var filtro models.Filtro
 

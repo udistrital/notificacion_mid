@@ -48,48 +48,6 @@ paths:
             $ref: '#/definitions/models.Colas'
         "403":
           description: body is empty
-  /colas/mensaje:
-    delete:
-      tags:
-      - colas
-      description: Borra la notificación de la cola según el key y el valor ingresados
-        en el body
-      operationId: ColasController.BorrarMensajeFiltro
-      parameters:
-      - in: body
-        name: filtro
-        description: Filtro de los mensajes a borrar
-        required: true
-        schema:
-          $ref: '#/definitions/models.Filtro'
-      responses:
-        "200":
-          description: '{string} Mensaje eliminado'
-        "404":
-          description: not found resource
-  /colas/mensaje/{cola}:
-    delete:
-      tags:
-      - colas
-      description: Borra la notificación de la cola
-      operationId: ColasController.BorrarMensaje
-      parameters:
-      - in: path
-        name: cola
-        description: Nombre de la cola en donde está el mensaje
-        required: true
-        type: string
-      - in: body
-        name: mensaje
-        description: Mensaje a borrar
-        required: true
-        schema:
-          $ref: '#/definitions/models.Mensaje'
-      responses:
-        "200":
-          description: '{string} Mensaje eliminado'
-        "404":
-          description: not found resource
   /colas/mensajes:
     get:
       tags:
@@ -121,6 +79,47 @@ paths:
             $ref: '#/definitions/models.Mensaje'
         "400":
           description: Error en parametros ingresados
+    delete:
+      tags:
+      - colas
+      description: Borra la notificación de la cola según el key y el valor ingresados
+        en el body
+      operationId: ColasController.BorrarMensajeFiltro
+      parameters:
+      - in: body
+        name: filtro
+        description: Filtro de los mensajes a borrar
+        required: true
+        schema:
+          $ref: '#/definitions/models.Filtro'
+      responses:
+        "200":
+          description: '{string} Mensaje eliminado'
+        "404":
+          description: not found resource
+  /colas/mensajes/{cola}:
+    delete:
+      tags:
+      - colas
+      description: Borra la notificación de la cola
+      operationId: ColasController.BorrarMensaje
+      parameters:
+      - in: path
+        name: cola
+        description: Nombre de la cola en donde está el mensaje
+        required: true
+        type: string
+      - in: body
+        name: mensaje
+        description: Mensaje a borrar
+        required: true
+        schema:
+          $ref: '#/definitions/models.Mensaje'
+      responses:
+        "200":
+          description: '{string} Mensaje eliminado'
+        "404":
+          description: not found resource
   /notificaciones/enviar/:
     post:
       tags:
@@ -185,23 +184,6 @@ paths:
         "404":
           description: not found resource
   /notificaciones/topic/:
-    delete:
-      tags:
-      - notificaciones
-      description: Borra el topic
-      operationId: NotificacionController.BorrarTopic
-      parameters:
-      - in: query
-        name: arnTopic
-        description: Arn del topic a eliminar
-        required: true
-        type: string
-      responses:
-        "200":
-          description: '{string} Topic eliminado'
-        "404":
-          description: not found resource
-  /notificaciones/topics/:
     get:
       tags:
       - notificaciones
@@ -233,17 +215,33 @@ paths:
             $ref: '#/definitions/map[string]interface{Success'
         "400":
           description: Error en parametros ingresados
+    delete:
+      tags:
+      - notificaciones
+      description: Borra el topic
+      operationId: NotificacionController.BorrarTopic
+      parameters:
+      - in: query
+        name: arnTopic
+        description: Arn del topic a eliminar
+        required: true
+        type: string
+      responses:
+        "200":
+          description: '{string} Topic eliminado'
+        "404":
+          description: not found resource
 definitions:
   1083.<nil>.string:
     title: string
     type: object
-  1159.0xc0004db710.false:
+  1159.0xc000514d20.false:
     title: "false"
     type: object
-  1849.0xc0004db8c0.false:
+  1849.0xc000514ed0.false:
     title: "false"
     type: object
-  2464.0xc0004dbad0.false:
+  2469.0xc0005150e0.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -258,7 +256,7 @@ definitions:
       EsperaVisibilidad:
         type: integer
         format: int64
-      Nombre:
+      NombreCola:
         type: string
       Politica:
         $ref: '#/definitions/models.Politica'
@@ -281,9 +279,9 @@ definitions:
     title: ConsultaSuscripcion
     type: object
     properties:
-      Endpoint:
+      ArnTopic:
         type: string
-      TopicArn:
+      Endpoint:
         type: string
   models.Endpoint:
     title: Endpoint
@@ -311,19 +309,19 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/1159.0xc0004db710.false'
+        $ref: '#/definitions/1159.0xc000514d20.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
     title: Notificacion
     type: object
     properties:
-      Arn:
+      ArnTopic:
         type: string
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1849.0xc0004db8c0.false'
+        $ref: '#/definitions/1849.0xc000514ed0.false'
       DestinatarioId:
         type: array
         items:
@@ -345,7 +343,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2464.0xc0004dbad0.false'
+          $ref: '#/definitions/2469.0xc0005150e0.false'
       Version:
         type: string
   models.Suscripcion:
@@ -364,7 +362,7 @@ definitions:
     properties:
       Display:
         type: string
-      Fifo:
+      EsFifo:
         type: boolean
       Nombre:
         type: string

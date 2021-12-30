@@ -126,7 +126,7 @@ func (c *NotificacionController) Subscribe() {
 // @Param	body		body 	models.Topic	true		"Body para configuracion del topic"
 // @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string }
 // @Failure 400 Error en parametros ingresados
-// @router /topics/ [post]
+// @router /topic/ [post]
 func (c *NotificacionController) CreateTopic() {
 	var topic models.Topic
 
@@ -162,7 +162,7 @@ func (c *NotificacionController) CreateTopic() {
 // @Description Lista todos los ARN de los topics disponibles
 // @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data []string}
 // @Failure 400 Error en parametros ingresados
-// @router /topics/ [get]
+// @router /topic/ [get]
 func (c *NotificacionController) GetTopics() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -212,10 +212,10 @@ func (c *NotificacionController) VerifSus() {
 	}()
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &consulta)
-	if consulta.TopicArn == "" || consulta.Endpoint == "" {
+	if consulta.ArnTopic == "" || consulta.Endpoint == "" {
 		panic(map[string]interface{}{"funcion": "VerifSus", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
-	if respuesta, err := helpers.VerificarSuscripcion(consulta.TopicArn, consulta.Endpoint); err == nil {
+	if respuesta, err := helpers.VerificarSuscripcion(consulta.ArnTopic, consulta.Endpoint); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {
