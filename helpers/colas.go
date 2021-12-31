@@ -93,6 +93,8 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 		}
 	}()
 
+	nombre = beego.BConfig.RunMode + "-" + nombre
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
@@ -160,6 +162,8 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 
 	client := sqs.NewFromConfig(cfg)
 
+	cola = beego.BConfig.RunMode + "-" + cola
+
 	qUInput := &sqs.GetQueueUrlInput{
 		QueueName: &cola,
 	}
@@ -205,6 +209,8 @@ func BorrarCola(nombre string) (outputError map[string]interface{}) {
 	}
 
 	client := sqs.NewFromConfig(cfg)
+
+	nombre = beego.BConfig.RunMode + "-" + nombre
 
 	qUInput := &sqs.GetQueueUrlInput{
 		QueueName: &nombre,
@@ -293,6 +299,8 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 
 	client := sqs.NewFromConfig(cfg)
 
+	filtro.NombreCola = beego.BConfig.RunMode + "-" + filtro.NombreCola
+
 	qUInput := &sqs.GetQueueUrlInput{
 		QueueName: &filtro.NombreCola,
 	}
@@ -339,7 +347,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	for _, m := range mensajes {
 		atributos := m.Body["MessageAttributes"].(map[string]interface{})
 		for key, value := range atributos {
-			if Contains(filtro.Filtro[key], value.(map[string]interface{})) {
+			if ContainsJson(filtro.Filtro[key], value.(map[string]interface{})) || ContainsString(filtro.Filtro[key], "All") {
 				err := BorrarMensaje(filtro.NombreCola, m)
 				if err != nil {
 					logs.Error(err)
