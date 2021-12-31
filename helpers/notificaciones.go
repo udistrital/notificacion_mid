@@ -60,12 +60,12 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 
 	var input *sns.PublishInput
 
-	if strings.Contains(body.Arn, ".fifo") {
+	if strings.Contains(body.ArnTopic, ".fifo") {
 		input = &sns.PublishInput{
 			Message:                &body.Mensaje,
 			MessageAttributes:      atributos,
 			Subject:                &body.Asunto,
-			TopicArn:               &body.Arn,
+			TopicArn:               &body.ArnTopic,
 			MessageDeduplicationId: &body.IdDeduplicacion,
 			MessageGroupId:         &body.IdGrupoMensaje,
 		}
@@ -74,7 +74,7 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 			Message:           &body.Mensaje,
 			MessageAttributes: atributos,
 			Subject:           &body.Asunto,
-			TopicArn:          &body.Arn,
+			TopicArn:          &body.ArnTopic,
 		}
 	}
 
@@ -165,22 +165,24 @@ func ListaTopics() (topicArn []string, outputError map[string]interface{}) {
 	}
 
 	for _, t := range results.Topics {
-		topicArn = append(topicArn, *t.TopicArn)
+		if strings.Contains(*t.TopicArn, beego.BConfig.RunMode+"-") {
+			topicArn = append(topicArn, *t.TopicArn)
+		}
 	}
 	return
 }
 
 func CrearTopic(topic models.Topic) (arn string, outputError map[string]interface{}) {
 	var tags []types.Tag
-	var key0 string = "Name"
-	var key1 string = "Environment"
+	var key0 string = "name"
+	var key1 string = "environment"
 	var val1 string = "prod"
 
-	if beego.BConfig.RunMode == "dev" || beego.BConfig.RunMode == "test" {
-		val1 = "test"
-	}
+	val1 = beego.BConfig.RunMode
 
-	if topic.Fifo {
+	topic.Nombre = beego.BConfig.RunMode + "-" + topic.Nombre
+
+	if topic.EsFifo {
 		topic.Nombre += ".fifo"
 	}
 
@@ -212,7 +214,7 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 		Name: &topic.Nombre,
 		Attributes: map[string]string{
 			"DisplayName": topic.Display,
-			"FifoTopic":   strconv.FormatBool(topic.Fifo),
+			"FifoTopic":   strconv.FormatBool(topic.EsFifo),
 		},
 		Tags: tags,
 	}
