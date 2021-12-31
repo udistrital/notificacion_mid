@@ -347,7 +347,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	for _, m := range mensajes {
 		atributos := m.Body["MessageAttributes"].(map[string]interface{})
 		for key, value := range atributos {
-			if Contains(filtro.Filtro[key], value.(map[string]interface{})) || Contains(filtro.Filtro[key], map[string]interface{}{"Value": "All"}) {
+			if ContainsJson(filtro.Filtro[key], value.(map[string]interface{})) || ContainsString(filtro.Filtro[key], "All") {
 				err := BorrarMensaje(filtro.NombreCola, m)
 				if err != nil {
 					logs.Error(err)
