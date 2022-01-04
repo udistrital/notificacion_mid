@@ -97,8 +97,8 @@ func (c *ColasController) RecibirMensajes() {
 	}
 
 	numMaxStr := c.GetString("numMax")
-	if tiempoOcultoStr == "" {
-		tiempoOcultoStr = "1"
+	if numMaxStr == "" {
+		numMaxStr = "1"
 	}
 
 	numMax, err := strconv.Atoi(numMaxStr)
