@@ -51,7 +51,7 @@ func (c *NotificacionController) PostOneNotif() {
 	}()
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &notif)
-	if notif.RemitenteId == "" || len(notif.DestinatarioId) == 0 || notif.Asunto == "" || notif.Mensaje == "" {
+	if notif.RemitenteId == "" || len(notif.DestinatarioId) == 0 || notif.Asunto == "" || notif.Mensaje == "" || notif.ArnTopic == "" {
 		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 

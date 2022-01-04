@@ -67,7 +67,7 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err.Error(), "status": "502"}
 		return "", outputError
 	}
 	client := sqs.NewFromConfig(cfg)
@@ -75,7 +75,7 @@ func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}
 	result, err := client.CreateQueue(context.TODO(), input)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/CrearCola", "err": err.Error(), "status": "502"}
 		return "", outputError
 	}
 	s1 := strings.Split(*result.QueueUrl, "/")
@@ -98,7 +98,7 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err.Error(), "status": "502"}
 		return nil, outputError
 	}
 
@@ -111,7 +111,7 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err.Error(), "status": "502"}
 		return nil, outputError
 	}
 
@@ -129,7 +129,7 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 	result, err := client.ReceiveMessage(context.TODO(), input)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err.Error(), "status": "502"}
 		return nil, outputError
 	}
 	for _, m := range result.Messages {
@@ -156,7 +156,7 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -171,7 +171,7 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -185,7 +185,7 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	_, err = client.DeleteMessage(context.TODO(), dMInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -204,7 +204,7 @@ func BorrarCola(nombre string) (outputError map[string]interface{}) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -219,7 +219,7 @@ func BorrarCola(nombre string) (outputError map[string]interface{}) {
 	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -232,7 +232,7 @@ func BorrarCola(nombre string) (outputError map[string]interface{}) {
 	_, err = client.DeleteQueue(context.TODO(), dMInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarCola", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -293,7 +293,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -308,7 +308,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -326,7 +326,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 		result, err := client.ReceiveMessage(context.TODO(), input)
 		if err != nil {
 			logs.Error(err)
-			outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
+			outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err.Error(), "status": "502"}
 			return outputError
 		}
 		if len(result.Messages) > 0 {
