@@ -156,7 +156,7 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err.Error(), "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -171,21 +171,16 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err.Error(), "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
 	queueURL := resultQ.QueueUrl
 
-	dMInput := &sqs.DeleteMessageInput{
-		QueueUrl:      queueURL,
-		ReceiptHandle: &mensaje.ReceiptHandle,
-	}
-
-	_, err = client.DeleteMessage(context.TODO(), dMInput)
-	if err != nil {
-		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err.Error(), "status": "502"}
+	err1 := Eliminar(queueURL, mensaje, client)
+	if err1 != nil {
+		logs.Error(err1)
+		outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err1, "status": "502"}
 		return outputError
 	}
 
@@ -349,15 +344,30 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 		atributos := m.Body["MessageAttributes"].(map[string]interface{})
 		for key, value := range atributos {
 			if ContainsJson(filtro.Filtro[key], value.(map[string]interface{})) || ContainsString(filtro.Filtro[key], "All") {
-				err := BorrarMensaje(filtro.NombreCola, m)
-				if err != nil {
-					logs.Error(err)
-					outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
+				err1 := Eliminar(queueURL, m, client)
+				if err1 != nil {
+					logs.Error(err1)
+					outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err1, "status": "502"}
 					return outputError
 				}
 			}
 		}
 	}
 	time.Sleep(2 * time.Second)
+	return
+}
+
+func Eliminar(urlCola *string, mensaje models.Mensaje, client *sqs.Client) (outputError map[string]interface{}) {
+	dMInput := &sqs.DeleteMessageInput{
+		QueueUrl:      urlCola,
+		ReceiptHandle: &mensaje.ReceiptHandle,
+	}
+
+	_, err := client.DeleteMessage(context.TODO(), dMInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/EliminarMensaje", "err": err.Error(), "status": "502"}
+		return outputError
+	}
 	return
 }
