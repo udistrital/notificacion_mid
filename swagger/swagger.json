@@ -114,7 +114,7 @@
                     }
                 }
             },
-            "delete": {
+            "post": {
                 "tags": [
                     "colas"
                 ],
@@ -142,7 +142,7 @@
             }
         },
         "/colas/mensajes/{cola}": {
-            "delete": {
+            "post": {
                 "tags": [
                     "colas"
                 ],
@@ -351,15 +351,15 @@
             "title": "string",
             "type": "object"
         },
-        "1159.0xc000514d20.false": {
+        "1159.0xc0005ba3c0.false": {
             "title": "false",
             "type": "object"
         },
-        "1849.0xc000514ed0.false": {
+        "1849.0xc0005ba570.false": {
             "title": "false",
             "type": "object"
         },
-        "2469.0xc0005150e0.false": {
+        "2469.0xc0005ba780.false": {
             "title": "false",
             "type": "object"
         },
@@ -455,7 +455,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/1159.0xc000514d20.false"
+                    "$ref": "#/definitions/1159.0xc0005ba3c0.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -473,7 +473,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/1849.0xc000514ed0.false"
+                    "$ref": "#/definitions/1849.0xc0005ba570.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -505,7 +505,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/2469.0xc0005150e0.false"
+                        "$ref": "#/definitions/2469.0xc0005ba780.false"
                     }
                 },
                 "Version": {
