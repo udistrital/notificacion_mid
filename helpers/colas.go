@@ -295,7 +295,6 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	client := sqs.NewFromConfig(cfg)
 
 	filtro.NombreCola = beego.BConfig.RunMode + "-" + filtro.NombreCola
-	logs.Debug("Nombre en helper: " + filtro.NombreCola)
 
 	qUInput := &sqs.GetQueueUrlInput{
 		QueueName: &filtro.NombreCola,

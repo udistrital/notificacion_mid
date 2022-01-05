@@ -179,8 +179,6 @@ func (c *ColasController) BorrarMensajeFiltro() {
 	}()
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &filtro)
-	logs.Debug("Filtro:")
-	logs.Debug(filtro)
 	if filtro.NombreCola == "" {
 		panic(map[string]interface{}{"funcion": "BorrarMensajeFiltro", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
