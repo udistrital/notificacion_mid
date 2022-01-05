@@ -79,7 +79,7 @@ paths:
             $ref: '#/definitions/models.Mensaje'
         "400":
           description: Error en parametros ingresados
-    delete:
+    post:
       tags:
       - colas
       description: Borra la notificación de la cola según el key y el valor ingresados
@@ -98,7 +98,7 @@ paths:
         "404":
           description: not found resource
   /colas/mensajes/{cola}:
-    delete:
+    post:
       tags:
       - colas
       description: Borra la notificación de la cola
@@ -235,13 +235,13 @@ definitions:
   1083.<nil>.string:
     title: string
     type: object
-  1159.0xc000514d20.false:
+  1159.0xc0005ba3c0.false:
     title: "false"
     type: object
-  1849.0xc000514ed0.false:
+  1849.0xc0005ba570.false:
     title: "false"
     type: object
-  2469.0xc0005150e0.false:
+  2469.0xc0005ba780.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -309,7 +309,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/1159.0xc000514d20.false'
+        $ref: '#/definitions/1159.0xc0005ba3c0.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -321,7 +321,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1849.0xc000514ed0.false'
+        $ref: '#/definitions/1849.0xc0005ba570.false'
       DestinatarioId:
         type: array
         items:
@@ -343,7 +343,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2469.0xc0005150e0.false'
+          $ref: '#/definitions/2469.0xc0005ba780.false'
       Version:
         type: string
   models.Suscripcion:

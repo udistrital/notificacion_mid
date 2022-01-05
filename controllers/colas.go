@@ -122,7 +122,7 @@ func (c *ColasController) RecibirMensajes() {
 // @Param	mensaje		body 	models.Mensaje	true		"Mensaje a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /mensajes/:cola [delete]
+// @router /mensajes/:cola [post]
 func (c *ColasController) BorrarMensaje() {
 	colaStr := c.Ctx.Input.Param(":cola")
 	var mensaje models.Mensaje
@@ -160,7 +160,7 @@ func (c *ColasController) BorrarMensaje() {
 // @Param	filtro		body 	models.Filtro		true		"Filtro de los mensajes a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /mensajes [delete]
+// @router /mensajes [post]
 func (c *ColasController) BorrarMensajeFiltro() {
 	var filtro models.Filtro
 
