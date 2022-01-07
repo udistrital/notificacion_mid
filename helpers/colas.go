@@ -9,6 +9,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -124,6 +125,7 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 		QueueUrl:            queueURL,
 		MaxNumberOfMessages: int32(numMax),
 		VisibilityTimeout:   int32(tiempoOculto),
+		WaitTimeSeconds:     *aws.Int32(5),
 	}
 
 	result, err := client.ReceiveMessage(context.TODO(), input)
@@ -132,6 +134,7 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 		outputError = map[string]interface{}{"funcion": "/RecibirMensajes", "err": err.Error(), "status": "502"}
 		return nil, outputError
 	}
+
 	for _, m := range result.Messages {
 		var body map[string]interface{}
 		json.Unmarshal([]byte(*m.Body), &body)
@@ -141,6 +144,94 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 			ReceiptHandle: *m.ReceiptHandle,
 		})
 	}
+	return
+}
+
+func EsperarMensajes(nombre string, tiempoEspera int, cantidad int, filtro map[string]string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/EsperarMensajes", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	nombre = beego.BConfig.RunMode + "-" + nombre
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/EsperarMensajes", "err": err.Error(), "status": "502"}
+		return nil, outputError
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &nombre,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/EsperarMensajes", "err": err.Error(), "status": "502"}
+		return nil, outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
+	restante := tiempoEspera
+	var mensajesRecibidos []models.Mensaje
+	for restante > 0 {
+		input := &sqs.ReceiveMessageInput{
+			MessageAttributeNames: []string{
+				string(types.QueueAttributeNameAll),
+			},
+			QueueUrl:            queueURL,
+			MaxNumberOfMessages: 10,
+			VisibilityTimeout:   int32(restante),
+			WaitTimeSeconds:     0,
+		}
+		result, err := client.ReceiveMessage(context.TODO(), input)
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/EsperarMensajes", "err": err.Error(), "status": "502"}
+			return nil, outputError
+		}
+		for _, m := range result.Messages {
+			var body map[string]interface{}
+			json.Unmarshal([]byte(*m.Body), &body)
+			mensajesRecibidos = append(mensajesRecibidos, models.Mensaje{
+				Attributes:    m.Attributes,
+				Body:          body,
+				ReceiptHandle: *m.ReceiptHandle,
+			})
+		}
+		time.Sleep(time.Second)
+		restante--
+	}
+	for _, m := range mensajesRecibidos {
+		atributos := m.Body["MessageAttributes"].(map[string]interface{})
+		and := false
+		for k := range atributos {
+			if (atributos[k].(map[string]interface{})["Type"].(string) != "String" && strings.Contains(atributos[k].(map[string]interface{})["Value"].(string), "\""+filtro[k]+"\"")) ||
+				(atributos[k].(map[string]interface{})["Type"].(string) == "String" && atributos[k].(map[string]interface{})["Value"].(string) == filtro[k]) ||
+				filtro[k] == "" {
+				and = true
+			} else {
+				and = false
+				break
+			}
+		}
+		if and {
+			mensajes = append(mensajes, m)
+		}
+	}
+
+	if cantidad != 0 && cantidad < len(mensajes) {
+		mensajes = mensajes[:cantidad]
+	}
+	time.Sleep(time.Second)
 	return
 }
 
@@ -295,7 +386,6 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	client := sqs.NewFromConfig(cfg)
 
 	filtro.NombreCola = beego.BConfig.RunMode + "-" + filtro.NombreCola
-	logs.Debug("Nombre en helper: " + filtro.NombreCola)
 
 	qUInput := &sqs.GetQueueUrlInput{
 		QueueName: &filtro.NombreCola,
@@ -319,7 +409,9 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 		VisibilityTimeout:   2,
 	}
 	for {
-		result, err := client.ReceiveMessage(context.TODO(), input)
+		result, err := client.ReceiveMessage(context.TODO(), input, func(o *sqs.Options) {
+			o.ClientLogMode = aws.LogRequestWithBody | aws.LogResponseWithBody
+		})
 		if err != nil {
 			logs.Error(err)
 			outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err.Error(), "status": "502"}
