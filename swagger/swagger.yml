@@ -141,8 +141,9 @@ paths:
         format: int64
       - in: query
         name: cantidad
-        description: Cantidad máxima de mensajes a recibir. Por defecto, se recibirán
-          todos
+        description: Cantidad máxima de mensajes a recibir. Esta cantidad debe ser
+          menor a diez veces el tiempo de espera, ya que se pueden obtener máximo
+          10 mensajes por segundo. Por defecto, se recibirán todos
         type: integer
         format: int64
       - in: query
@@ -273,13 +274,13 @@ definitions:
   1083.<nil>.string:
     title: string
     type: object
-  1159.0xc0006d9f50.false:
+  1159.0xc0006dc120.false:
     title: "false"
     type: object
-  1849.0xc0006ec120.false:
+  1849.0xc0006dc2d0.false:
     title: "false"
     type: object
-  2469.0xc0006ec330.false:
+  2469.0xc0006dc4e0.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -347,7 +348,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/1159.0xc0006d9f50.false'
+        $ref: '#/definitions/1159.0xc0006dc120.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -359,7 +360,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1849.0xc0006ec120.false'
+        $ref: '#/definitions/1849.0xc0006dc2d0.false'
       DestinatarioId:
         type: array
         items:
@@ -381,7 +382,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2469.0xc0006ec330.false'
+          $ref: '#/definitions/2469.0xc0006dc4e0.false'
       Version:
         type: string
   models.Suscripcion:

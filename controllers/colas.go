@@ -122,7 +122,7 @@ func (c *ColasController) RecibirMensajes() {
 // @Description Espera por un tiempo determinado a que los mensajes estén disponibles y devuelve los recibidos en ese intervalo de tiempo
 // @Param	nombre			query 	string	true	"Nombre de la cola"
 // @Param	tiempoEspera	query 	int		true	"Tiempo de espera del api por mensajes"
-// @Param	cantidad		query 	int		false	"Cantidad máxima de mensajes a recibir. Por defecto, se recibirán todos"
+// @Param	cantidad		query 	int		false	"Cantidad máxima de mensajes a recibir. Esta cantidad debe ser menor a diez veces el tiempo de espera, ya que se pueden obtener máximo 10 mensajes por segundo. Por defecto, se recibirán todos"
 // @Param	filtro			query 	string	false	"Recepción de mensajes filtrados por metadata. Tiene el funcionamiento de un and, por lo tanto sólo devuelve los valores que cumplan con todo el filtro"
 // @Success 201 {object} models.Mensaje
 // @Failure 400 Error en parametros ingresados
@@ -166,7 +166,7 @@ func (c *ColasController) EsperarMensajes() {
 	}
 
 	cantidad, err := strconv.Atoi(cantidadStr)
-	if err != nil && cantidadStr != "" {
+	if (err != nil && cantidadStr != "") || cantidad > tiempoEspera*10 {
 		panic(map[string]interface{}{"funcion": "EsperarMensajes", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
