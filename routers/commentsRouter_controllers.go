@@ -52,6 +52,15 @@ func init() {
             Filters: nil,
             Params: nil})
 
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
+        beego.ControllerComments{
+            Method: "EsperarMensajes",
+            Router: "/mensajes/espera",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:NotificacionController"],
         beego.ControllerComments{
             Method: "PostOneNotif",
