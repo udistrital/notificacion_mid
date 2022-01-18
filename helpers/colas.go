@@ -18,7 +18,7 @@ import (
 
 func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}) {
 	var env string = beego.BConfig.RunMode
-	var fifoBool string
+	fifoBool := strconv.FormatBool(cola.EsFifo)
 	var input *sqs.CreateQueueInput
 
 	defer func() {
