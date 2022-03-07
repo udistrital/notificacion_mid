@@ -30,9 +30,9 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	AllowedOrigins := []string{"*.udistrital.edu.co"}
+	AllowedOrigins := []string{"https://*.udistrital.edu.co", "http://*.udistrital.edu.co"}
 	if beego.BConfig.RunMode != "production" {
-		AllowedOrigins = append(AllowedOrigins, "*")
+		AllowedOrigins = []string{"*"}
 	}
 
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
