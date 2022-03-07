@@ -334,7 +334,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string}",
                         "schema": {
-                            
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -453,6 +453,12 @@
             "title": "Endpoint",
             "type": "object",
             "properties": {
+                "Atributos": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "Endpoint": {
                     "type": "string"
                 },

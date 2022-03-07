@@ -18,11 +18,20 @@ import (
 func PublicarNotificacion(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
 	tipoString := "String"
 	tipoLista := "String.Array"
+	atributos := make(map[string]types.MessageAttributeValue)
 	var listaDestinatarios string
 	if len(body.DestinatarioId) > 1 {
 		listaDestinatarios = "[\"" + strings.Join(body.DestinatarioId, "\",\"") + "\"]"
-	} else {
+		atributos["Destinatario"] = types.MessageAttributeValue{
+			DataType:    &tipoLista,
+			StringValue: &listaDestinatarios,
+		}
+	} else if len(body.DestinatarioId) == 1 {
 		listaDestinatarios = "\"" + body.DestinatarioId[0] + "\""
+		atributos["Destinatario"] = types.MessageAttributeValue{
+			DataType:    &tipoLista,
+			StringValue: &listaDestinatarios,
+		}
 	}
 
 	defer func() {
@@ -40,14 +49,9 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 	}
 	client := sns.NewFromConfig(cfg)
 
-	atributos := make(map[string]types.MessageAttributeValue)
 	atributos["Remitente"] = types.MessageAttributeValue{
 		DataType:    &tipoString,
 		StringValue: &body.RemitenteId,
-	}
-	atributos["Destinatario"] = types.MessageAttributeValue{
-		DataType:    &tipoLista,
-		StringValue: &listaDestinatarios,
 	}
 
 	for key, value := range body.Atributos {
@@ -57,6 +61,8 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 			StringValue: &str,
 		}
 	}
+	logs.Debug(body.Atributos)
+	logs.Debug(&atributos)
 
 	var input *sns.PublishInput
 
@@ -77,7 +83,9 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 			TopicArn:          &body.ArnTopic,
 		}
 	}
-	result, err := client.Publish(context.TODO(), input)
+	result, err := client.Publish(context.TODO(), input, func(o *sns.Options) {
+		o.ClientLogMode = aws.LogRequestWithBody | aws.LogResponseWithBody
+	})
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err.Error(), "status": "502"}
@@ -108,18 +116,24 @@ func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string
 	client := sns.NewFromConfig(cfg)
 
 	for _, subscriptor := range body.Suscritos {
-		att := make(map[string]string)
-		att["Destinatario"] = subscriptor.Id
-		for k, v := range atributos {
-			att[k] = v
+		strAdicional := ""
+		if len(subscriptor.Atributos) > 0 {
+			strAdicional = ",\"" + strings.Join(subscriptor.Atributos, "\",\"") + "\""
 		}
+		strAtt := "{\"Destinatario\":[\"" + subscriptor.Id + "\",\"todos\"" + strAdicional + "]"
+		if len(atributos) > 0 {
+			for k, v := range atributos {
+				strAtt += ",\"" + k + "\":[\"" + v + "\"]"
+			}
+		}
+		strAtt += "}"
 		input := &sns.SubscribeInput{
 			Endpoint:              &subscriptor.Endpoint,
 			Protocol:              aws.String(subscriptor.Protocolo),
 			ReturnSubscriptionArn: true,
 			TopicArn:              &body.ArnTopic,
 			Attributes: map[string]string{
-				"FilterPolicy": "{\"Destinatario\":[\"" + subscriptor.Id + "\",\"todos\"]}",
+				"FilterPolicy": strAtt,
 			},
 		}
 
