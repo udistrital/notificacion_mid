@@ -30,7 +30,7 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	AllowedOrigins := []string{"https://*.udistrital.edu.co", "http://*.udistrital.edu.co"}
+	AllowedOrigins := []string{"https://*.udistrital.edu.co", "http://api.intranetoas.udistrital.edu.co:*", "http://api2.intranetoas.udistrital.edu.co:*", "http://pruebasapi.intranetoas.udistrital.edu.co:*", "http://pruebasapi2.intranetoas.udistrital.edu.co:*"}
 	if beego.BConfig.RunMode != "production" {
 		AllowedOrigins = []string{"*"}
 	}

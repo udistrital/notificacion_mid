@@ -94,7 +94,10 @@ func (c *NotificacionController) Subscribe() {
 	for _, subscriptor := range sub.Suscritos {
 		prot := subscriptor.Protocolo
 		if prot != "kinesis" && prot != "lambda" && prot != "sqs" && prot != "email" && prot != "email-json" && prot != "http" && prot != "https" && prot != "application" && prot != "sms" && prot != "firehouse" {
-			panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Protocolo invalido", "status": "400"})
+			panic(map[string]interface{}{"funcion": "Subscribe", "err": "Protocolo invalido", "status": "400"})
+		}
+		if subscriptor.Id == "" && len(subscriptor.Atributos) == 0 {
+			panic(map[string]interface{}{"funcion": "Subscribe", "err": "Mensaje sin destino", "status": "400"})
 		}
 	}
 
