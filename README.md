@@ -1,5 +1,7 @@
 # notificacion_mid
-Servicio para envío de notificaciónes por difusión en AWS SNS
+Servicio para envío de notificaciónes por difusión en AWS SNS.
+
+Para instrucciones de implementación del sistema de notificaciones consulta la [documentacion](https://drive.google.com/file/d/1ZlXdKAyooyftamyCZX8Btmd5nhDR5YEX/view?usp=drivesdk)
 
 ## Especificaciones Técnicas
 

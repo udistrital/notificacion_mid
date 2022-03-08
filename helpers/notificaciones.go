@@ -18,11 +18,20 @@ import (
 func PublicarNotificacion(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
 	tipoString := "String"
 	tipoLista := "String.Array"
+	atributos := make(map[string]types.MessageAttributeValue)
 	var listaDestinatarios string
 	if len(body.DestinatarioId) > 1 {
 		listaDestinatarios = "[\"" + strings.Join(body.DestinatarioId, "\",\"") + "\"]"
-	} else {
+		atributos["Destinatario"] = types.MessageAttributeValue{
+			DataType:    &tipoLista,
+			StringValue: &listaDestinatarios,
+		}
+	} else if len(body.DestinatarioId) == 1 {
 		listaDestinatarios = "\"" + body.DestinatarioId[0] + "\""
+		atributos["Destinatario"] = types.MessageAttributeValue{
+			DataType:    &tipoLista,
+			StringValue: &listaDestinatarios,
+		}
 	}
 
 	defer func() {
@@ -35,19 +44,14 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err.Error(), "status": "502"}
 		return "", outputError
 	}
 	client := sns.NewFromConfig(cfg)
 
-	atributos := make(map[string]types.MessageAttributeValue)
 	atributos["Remitente"] = types.MessageAttributeValue{
 		DataType:    &tipoString,
 		StringValue: &body.RemitenteId,
-	}
-	atributos["Destinatario"] = types.MessageAttributeValue{
-		DataType:    &tipoLista,
-		StringValue: &listaDestinatarios,
 	}
 
 	for key, value := range body.Atributos {
@@ -57,6 +61,8 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 			StringValue: &str,
 		}
 	}
+	logs.Debug(body.Atributos)
+	logs.Debug(&atributos)
 
 	var input *sns.PublishInput
 
@@ -77,11 +83,12 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 			TopicArn:          &body.ArnTopic,
 		}
 	}
-
-	result, err := client.Publish(context.TODO(), input)
+	result, err := client.Publish(context.TODO(), input, func(o *sns.Options) {
+		o.ClientLogMode = aws.LogRequestWithBody | aws.LogResponseWithBody
+	})
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err.Error(), "status": "502"}
 		return "", outputError
 	}
 
@@ -102,32 +109,38 @@ func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/Suscribir", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/Suscribir", "err": err.Error(), "status": "502"}
 		return "", outputError
 	}
 
 	client := sns.NewFromConfig(cfg)
 
 	for _, subscriptor := range body.Suscritos {
-		att := make(map[string]string)
-		att["Destinatario"] = subscriptor.Id
-		for k, v := range atributos {
-			att[k] = v
+		strAdicional := ""
+		if len(subscriptor.Atributos) > 0 {
+			strAdicional = ",\"" + strings.Join(subscriptor.Atributos, "\",\"") + "\""
 		}
+		strAtt := "{\"Destinatario\":[\"" + subscriptor.Id + "\",\"todos\"" + strAdicional + "]"
+		if len(atributos) > 0 {
+			for k, v := range atributos {
+				strAtt += ",\"" + k + "\":[\"" + v + "\"]"
+			}
+		}
+		strAtt += "}"
 		input := &sns.SubscribeInput{
 			Endpoint:              &subscriptor.Endpoint,
 			Protocol:              aws.String(subscriptor.Protocolo),
 			ReturnSubscriptionArn: true,
 			TopicArn:              &body.ArnTopic,
 			Attributes: map[string]string{
-				"FilterPolicy": "{\"Destinatario\":[\"" + subscriptor.Id + "\",\"todos\"]}",
+				"FilterPolicy": strAtt,
 			},
 		}
 
 		result, err := client.Subscribe(context.TODO(), input)
 		if err != nil {
 			logs.Error(err)
-			outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err, "status": "502"}
+			outputError = map[string]interface{}{"funcion": "/PublicarNotificacion", "err": err.Error(), "status": "502"}
 			return "", outputError
 		}
 
@@ -149,7 +162,7 @@ func ListaTopics() (topicArn []string, outputError map[string]interface{}) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err.Error(), "status": "502"}
 		return nil, outputError
 	}
 
@@ -160,7 +173,7 @@ func ListaTopics() (topicArn []string, outputError map[string]interface{}) {
 	results, err := client.ListTopics(context.TODO(), input)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err.Error(), "status": "502"}
 		return nil, outputError
 	}
 
@@ -196,7 +209,7 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err.Error(), "status": "502"}
 		return "", outputError
 	}
 
@@ -222,7 +235,7 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 	results, err := client.CreateTopic(context.TODO(), input)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err.Error(), "status": "502"}
 		return "", outputError
 	}
 
@@ -241,7 +254,7 @@ func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputErr
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/ListaTopics", "err": err.Error(), "status": "502"}
 		return false, outputError
 	}
 
@@ -254,7 +267,7 @@ func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputErr
 	results, err := client.ListSubscriptionsByTopic(context.TODO(), input)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err.Error(), "status": "502"}
 		return false, outputError
 	}
 
@@ -278,7 +291,7 @@ func BorrarTopic(arn string) (outputError map[string]interface{}) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarTopic", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarTopic", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 
@@ -291,7 +304,7 @@ func BorrarTopic(arn string) (outputError map[string]interface{}) {
 	_, err = client.DeleteTopic(context.TODO(), input)
 	if err != nil {
 		logs.Error(err)
-		outputError = map[string]interface{}{"funcion": "/BorrarTopic", "err": err, "status": "502"}
+		outputError = map[string]interface{}{"funcion": "/BorrarTopic", "err": err.Error(), "status": "502"}
 		return outputError
 	}
 

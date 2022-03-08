@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
@@ -76,7 +78,7 @@ func (c *ColasController) RecibirMensajes() {
 		if err := recover(); err != nil {
 			logs.Error(err)
 			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/GetTopics/" + (localError["funcion"]).(string))
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/RecibirMensaje/" + (localError["funcion"]).(string))
 			c.Data["data"] = (localError["err"])
 			if status, ok := localError["status"]; ok {
 				c.Abort(status.(string))
@@ -97,8 +99,8 @@ func (c *ColasController) RecibirMensajes() {
 	}
 
 	numMaxStr := c.GetString("numMax")
-	if tiempoOcultoStr == "" {
-		tiempoOcultoStr = "1"
+	if numMaxStr == "" {
+		numMaxStr = "1"
 	}
 
 	numMax, err := strconv.Atoi(numMaxStr)
@@ -115,6 +117,68 @@ func (c *ColasController) RecibirMensajes() {
 	c.ServeJSON()
 }
 
+// EsperarMensajes ...
+// @Title EsperarMensajes
+// @Description Espera por un tiempo determinado a que los mensajes estén disponibles y devuelve los recibidos en ese intervalo de tiempo
+// @Param	nombre			query 	string	true	"Nombre de la cola"
+// @Param	tiempoEspera	query 	int		true	"Tiempo de espera del api por mensajes"
+// @Param	cantidad		query 	int		false	"Cantidad máxima de mensajes a recibir. Esta cantidad debe ser menor a diez veces el tiempo de espera, ya que se pueden obtener máximo 10 mensajes por segundo. Por defecto, se recibirán todos"
+// @Param	filtro			query 	string	false	"Recepción de mensajes filtrados por metadata. Tiene el funcionamiento de un and, por lo tanto sólo devuelve los valores que cumplan con todo el filtro"
+// @Success 201 {object} models.Mensaje
+// @Failure 400 Error en parametros ingresados
+// @router /mensajes/espera [get]
+func (c *ColasController) EsperarMensajes() {
+	filtro := make(map[string]string)
+
+	defer func() {
+		if err := recover(); err != nil {
+			logs.Error(err)
+			localError := err.(map[string]interface{})
+			c.Data["message"] = (beego.AppConfig.String("appname") + "/EsperarMensajes/" + (localError["funcion"]).(string))
+			c.Data["data"] = (localError["err"])
+			if status, ok := localError["status"]; ok {
+				c.Abort(status.(string))
+			} else {
+				c.Abort("404")
+			}
+		}
+	}()
+
+	tiempoEsperaStr := c.GetString("tiempoEspera")
+	cantidadStr := c.GetString("cantidad")
+
+	if v := c.GetString("filtro"); v != "" {
+		for _, cond := range strings.Split(v, ",") {
+			kv := strings.SplitN(cond, ":", 2)
+			if len(kv) != 2 {
+				c.Data["json"] = errors.New("error: atributos invalidos")
+				c.ServeJSON()
+				return
+			}
+			k, v := kv[0], kv[1]
+			filtro[k] = v
+		}
+	}
+
+	tiempoEspera, err := strconv.Atoi(tiempoEsperaStr)
+	if err != nil {
+		panic(map[string]interface{}{"funcion": "EsperarMensajes", "err": "Error en parámetros de ingresos", "status": "400"})
+	}
+
+	cantidad, err := strconv.Atoi(cantidadStr)
+	if (err != nil && cantidadStr != "") || cantidad > tiempoEspera*10 {
+		panic(map[string]interface{}{"funcion": "EsperarMensajes", "err": "Error en parámetros de ingresos", "status": "400"})
+	}
+
+	if respuesta, err := helpers.EsperarMensajes(c.GetString("nombre"), tiempoEspera, cantidad, filtro); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
 // BorrarMensaje ...
 // @Title BorrarMensaje
 // @Description Borra la notificación de la cola
@@ -122,7 +186,7 @@ func (c *ColasController) RecibirMensajes() {
 // @Param	mensaje		body 	models.Mensaje	true		"Mensaje a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /mensajes/:cola [delete]
+// @router /mensajes/:cola [post]
 func (c *ColasController) BorrarMensaje() {
 	colaStr := c.Ctx.Input.Param(":cola")
 	var mensaje models.Mensaje
@@ -145,9 +209,9 @@ func (c *ColasController) BorrarMensaje() {
 		panic(map[string]interface{}{"funcion": "BorrarMensaje", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if err := helpers.BorrarMensaje(colaStr, mensaje); err == nil {
+	if conteo, err := helpers.BorrarMensaje(colaStr, mensaje); err == nil {
 		c.Ctx.Output.SetStatus(200)
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Mensaje eliminado"}
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"MensajesEliminados": conteo}}
 	} else {
 		panic(err)
 	}
@@ -160,7 +224,7 @@ func (c *ColasController) BorrarMensaje() {
 // @Param	filtro		body 	models.Filtro		true		"Filtro de los mensajes a borrar"
 // @Success 200 {string} Mensaje eliminado
 // @Failure 404 not found resource
-// @router /mensajes [delete]
+// @router /mensajes [post]
 func (c *ColasController) BorrarMensajeFiltro() {
 	var filtro models.Filtro
 
@@ -179,14 +243,13 @@ func (c *ColasController) BorrarMensajeFiltro() {
 	}()
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &filtro)
-
 	if filtro.NombreCola == "" {
 		panic(map[string]interface{}{"funcion": "BorrarMensajeFiltro", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if err := helpers.BorrarMensajeFiltro(filtro); err == nil {
+	if conteo, err := helpers.BorrarMensajeFiltro(filtro); err == nil {
 		c.Ctx.Output.SetStatus(200)
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Mensajes eliminados"}
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"MensajesEliminados": conteo}}
 	} else {
 		panic(err)
 	}

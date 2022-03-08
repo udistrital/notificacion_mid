@@ -28,7 +28,8 @@
                         "name": "cola",
                         "description": "Nombre de la cola a borrar",
                         "required": true,
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "[^.]$"
                     }
                 ],
                 "responses": {
@@ -114,7 +115,7 @@
                     }
                 }
             },
-            "delete": {
+            "post": {
                 "tags": [
                     "colas"
                 ],
@@ -141,8 +142,58 @@
                 }
             }
         },
+        "/colas/mensajes/espera": {
+            "get": {
+                "tags": [
+                    "colas"
+                ],
+                "description": "Espera por un tiempo determinado a que los mensajes estén disponibles y devuelve los recibidos en ese intervalo de tiempo",
+                "operationId": "ColasController.EsperarMensajes",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "nombre",
+                        "description": "Nombre de la cola",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "tiempoEspera",
+                        "description": "Tiempo de espera del api por mensajes",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "in": "query",
+                        "name": "cantidad",
+                        "description": "Cantidad máxima de mensajes a recibir. Esta cantidad debe ser menor a diez veces el tiempo de espera, ya que se pueden obtener máximo 10 mensajes por segundo. Por defecto, se recibirán todos",
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "in": "query",
+                        "name": "filtro",
+                        "description": "Recepción de mensajes filtrados por metadata. Tiene el funcionamiento de un and, por lo tanto sólo devuelve los valores que cumplan con todo el filtro",
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.Mensaje"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
         "/colas/mensajes/{cola}": {
-            "delete": {
+            "post": {
                 "tags": [
                     "colas"
                 ],
@@ -198,7 +249,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -235,7 +286,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -283,7 +334,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string}",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -312,7 +363,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string }",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -347,26 +398,6 @@
         }
     },
     "definitions": {
-        "1083.\u003cnil\u003e.string": {
-            "title": "string",
-            "type": "object"
-        },
-        "1159.0xc000514d20.false": {
-            "title": "false",
-            "type": "object"
-        },
-        "1849.0xc000514ed0.false": {
-            "title": "false",
-            "type": "object"
-        },
-        "2469.0xc0005150e0.false": {
-            "title": "false",
-            "type": "object"
-        },
-        "map[string]interface{Success": {
-            "title": "map[string]interface{Success",
-            "type": "object"
-        },
         "models.Cola": {
             "title": "Cola",
             "type": "object",
@@ -422,6 +453,12 @@
             "title": "Endpoint",
             "type": "object",
             "properties": {
+                "Atributos": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "Endpoint": {
                     "type": "string"
                 },
@@ -438,10 +475,28 @@
             "type": "object",
             "properties": {
                 "Filtro": {
-                    "$ref": "#/definitions/1083.\u003cnil\u003e.string"
+                    "type": "object"
                 },
                 "NombreCola": {
                     "type": "string"
+                }
+            }
+        },
+        "resRefactor":{
+            "title": "RespuestaAPIRefactor",
+            "type":"object",
+            "properties": {
+                "Success":{
+                    "type":"string"
+                },
+                "Status":{
+                    "type":"boolean"
+                },
+                "Message":{
+                    "type":"string"
+                },
+                "Data":{
+                    "type":"object"
                 }
             }
         },
@@ -455,7 +510,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/1159.0xc000514d20.false"
+                    "type": "object"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -473,7 +528,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/1849.0xc000514ed0.false"
+                    "type": "object"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -505,7 +560,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/2469.0xc0005150e0.false"
+                        "type": "object"
                     }
                 },
                 "Version": {

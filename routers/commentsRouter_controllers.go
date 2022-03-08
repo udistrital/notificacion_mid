@@ -38,7 +38,7 @@ func init() {
         beego.ControllerComments{
             Method: "BorrarMensajeFiltro",
             Router: "/mensajes",
-            AllowHTTPMethods: []string{"delete"},
+            AllowHTTPMethods: []string{"post"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})
@@ -47,7 +47,16 @@ func init() {
         beego.ControllerComments{
             Method: "BorrarMensaje",
             Router: "/mensajes/:cola",
-            AllowHTTPMethods: []string{"delete"},
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:ColasController"],
+        beego.ControllerComments{
+            Method: "EsperarMensajes",
+            Router: "/mensajes/espera",
+            AllowHTTPMethods: []string{"get"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})

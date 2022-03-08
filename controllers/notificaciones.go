@@ -51,7 +51,7 @@ func (c *NotificacionController) PostOneNotif() {
 	}()
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &notif)
-	if notif.RemitenteId == "" || len(notif.DestinatarioId) == 0 || notif.Asunto == "" || notif.Mensaje == "" {
+	if notif.RemitenteId == "" || (len(notif.DestinatarioId) == 0 && len(notif.Atributos) == 0) || notif.Asunto == "" || notif.Mensaje == "" || notif.ArnTopic == "" {
 		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
@@ -94,7 +94,10 @@ func (c *NotificacionController) Subscribe() {
 	for _, subscriptor := range sub.Suscritos {
 		prot := subscriptor.Protocolo
 		if prot != "kinesis" && prot != "lambda" && prot != "sqs" && prot != "email" && prot != "email-json" && prot != "http" && prot != "https" && prot != "application" && prot != "sms" && prot != "firehouse" {
-			panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Protocolo invalido", "status": "400"})
+			panic(map[string]interface{}{"funcion": "Subscribe", "err": "Protocolo invalido", "status": "400"})
+		}
+		if subscriptor.Id == "" && len(subscriptor.Atributos) == 0 {
+			panic(map[string]interface{}{"funcion": "Subscribe", "err": "Mensaje sin destino", "status": "400"})
 		}
 	}
 

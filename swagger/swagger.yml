@@ -79,7 +79,7 @@ paths:
             $ref: '#/definitions/models.Mensaje'
         "400":
           description: Error en parametros ingresados
-    delete:
+    post:
       tags:
       - colas
       description: Borra la notificación de la cola según el key y el valor ingresados
@@ -98,7 +98,7 @@ paths:
         "404":
           description: not found resource
   /colas/mensajes/{cola}:
-    delete:
+    post:
       tags:
       - colas
       description: Borra la notificación de la cola
@@ -120,6 +120,45 @@ paths:
           description: '{string} Mensaje eliminado'
         "404":
           description: not found resource
+  /colas/mensajes/espera:
+    get:
+      tags:
+      - colas
+      description: Espera por un tiempo determinado a que los mensajes estén disponibles
+        y devuelve los recibidos en ese intervalo de tiempo
+      operationId: ColasController.EsperarMensajes
+      parameters:
+      - in: query
+        name: nombre
+        description: Nombre de la cola
+        required: true
+        type: string
+      - in: query
+        name: tiempoEspera
+        description: Tiempo de espera del api por mensajes
+        required: true
+        type: integer
+        format: int64
+      - in: query
+        name: cantidad
+        description: Cantidad máxima de mensajes a recibir. Esta cantidad debe ser
+          menor a diez veces el tiempo de espera, ya que se pueden obtener máximo
+          10 mensajes por segundo. Por defecto, se recibirán todos
+        type: integer
+        format: int64
+      - in: query
+        name: filtro
+        description: Recepción de mensajes filtrados por metadata. Tiene el funcionamiento
+          de un and, por lo tanto sólo devuelve los valores que cumplan con todo el
+          filtro
+        type: string
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.Mensaje'
+        "400":
+          description: Error en parametros ingresados
   /notificaciones/enviar/:
     post:
       tags:
@@ -232,16 +271,16 @@ paths:
         "404":
           description: not found resource
 definitions:
-  1083.<nil>.string:
+  1192.<nil>.string:
     title: string
     type: object
-  1159.0xc000514d20.false:
+  1268.0xc00074eba0.false:
     title: "false"
     type: object
-  1849.0xc000514ed0.false:
+  1958.0xc00074ed50.false:
     title: "false"
     type: object
-  2469.0xc0005150e0.false:
+  2578.0xc00074ef60.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -287,6 +326,10 @@ definitions:
     title: Endpoint
     type: object
     properties:
+      Atributos:
+        type: array
+        items:
+          type: string
       Endpoint:
         type: string
       Id:
@@ -298,7 +341,7 @@ definitions:
     type: object
     properties:
       Filtro:
-        $ref: '#/definitions/1083.<nil>.string'
+        $ref: '#/definitions/1192.<nil>.string'
       NombreCola:
         type: string
   models.Mensaje:
@@ -309,7 +352,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/1159.0xc000514d20.false'
+        $ref: '#/definitions/1268.0xc00074eba0.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -321,7 +364,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1849.0xc000514ed0.false'
+        $ref: '#/definitions/1958.0xc00074ed50.false'
       DestinatarioId:
         type: array
         items:
@@ -343,7 +386,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2469.0xc0005150e0.false'
+          $ref: '#/definitions/2578.0xc00074ef60.false'
       Version:
         type: string
   models.Suscripcion:
