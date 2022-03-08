@@ -18,7 +18,7 @@ import (
 
 func CrearCola(cola models.Cola) (arn string, outputError map[string]interface{}) {
 	var env string = beego.BConfig.RunMode
-	var fifoBool string
+	fifoBool := strconv.FormatBool(cola.EsFifo)
 	var input *sqs.CreateQueueInput
 
 	defer func() {
@@ -235,8 +235,7 @@ func EsperarMensajes(nombre string, tiempoEspera int, cantidad int, filtro map[s
 	return
 }
 
-func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]interface{}) {
-
+func BorrarMensaje(cola string, mensaje models.Mensaje) (conteo int, outputError map[string]interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
 			outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err, "status": "502"}
@@ -248,7 +247,7 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err.Error(), "status": "502"}
-		return outputError
+		return 0, outputError
 	}
 
 	client := sqs.NewFromConfig(cfg)
@@ -263,7 +262,7 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err.Error(), "status": "502"}
-		return outputError
+		return 0, outputError
 	}
 
 	queueURL := resultQ.QueueUrl
@@ -272,8 +271,9 @@ func BorrarMensaje(cola string, mensaje models.Mensaje) (outputError map[string]
 	if err1 != nil {
 		logs.Error(err1)
 		outputError = map[string]interface{}{"funcion": "/BorrarMensaje", "err": err1, "status": "502"}
-		return outputError
+		return 0, outputError
 	}
+	conteo++
 
 	return
 }
@@ -366,7 +366,7 @@ func ValoresDefault(cola *models.Cola) {
 	}
 }
 
-func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface{}) {
+func BorrarMensajeFiltro(filtro models.Filtro) (conteo int, outputError map[string]interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
 			outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err, "status": "502"}
@@ -380,7 +380,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err.Error(), "status": "502"}
-		return outputError
+		return 0, outputError
 	}
 
 	client := sqs.NewFromConfig(cfg)
@@ -395,7 +395,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 	if err != nil {
 		logs.Error(err)
 		outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err.Error(), "status": "502"}
-		return outputError
+		return 0, outputError
 	}
 
 	queueURL := resultQ.QueueUrl
@@ -415,7 +415,7 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 		if err != nil {
 			logs.Error(err)
 			outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err.Error(), "status": "502"}
-			return outputError
+			return 0, outputError
 		}
 		if len(result.Messages) > 0 {
 			for _, m := range result.Messages {
@@ -440,8 +440,9 @@ func BorrarMensajeFiltro(filtro models.Filtro) (outputError map[string]interface
 				if err1 != nil {
 					logs.Error(err1)
 					outputError = map[string]interface{}{"funcion": "/BorrarMensajeFiltro", "err": err1, "status": "502"}
-					return outputError
+					return 0, outputError
 				}
+				conteo++
 			}
 		}
 	}

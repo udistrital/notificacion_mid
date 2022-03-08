@@ -209,9 +209,9 @@ func (c *ColasController) BorrarMensaje() {
 		panic(map[string]interface{}{"funcion": "BorrarMensaje", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if err := helpers.BorrarMensaje(colaStr, mensaje); err == nil {
+	if conteo, err := helpers.BorrarMensaje(colaStr, mensaje); err == nil {
 		c.Ctx.Output.SetStatus(200)
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Mensaje eliminado"}
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"MensajesEliminados": conteo}}
 	} else {
 		panic(err)
 	}
@@ -247,9 +247,9 @@ func (c *ColasController) BorrarMensajeFiltro() {
 		panic(map[string]interface{}{"funcion": "BorrarMensajeFiltro", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if err := helpers.BorrarMensajeFiltro(filtro); err == nil {
+	if conteo, err := helpers.BorrarMensajeFiltro(filtro); err == nil {
 		c.Ctx.Output.SetStatus(200)
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Mensajes eliminados"}
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"MensajesEliminados": conteo}}
 	} else {
 		panic(err)
 	}

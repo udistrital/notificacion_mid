@@ -28,7 +28,8 @@
                         "name": "cola",
                         "description": "Nombre de la cola a borrar",
                         "required": true,
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "[^.]$"
                     }
                 ],
                 "responses": {
@@ -248,7 +249,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -285,7 +286,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -333,7 +334,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string}",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -362,7 +363,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string }",
                         "schema": {
-                            "$ref": "#/definitions/map[string]interface{Success"
+                            "$ref": "#/definitions/resRefactor"
                         }
                     },
                     "400": {
@@ -397,26 +398,6 @@
         }
     },
     "definitions": {
-        "1083.\u003cnil\u003e.string": {
-            "title": "string",
-            "type": "object"
-        },
-        "1159.0xc0006dc120.false": {
-            "title": "false",
-            "type": "object"
-        },
-        "1849.0xc0006dc2d0.false": {
-            "title": "false",
-            "type": "object"
-        },
-        "2469.0xc0006dc4e0.false": {
-            "title": "false",
-            "type": "object"
-        },
-        "map[string]interface{Success": {
-            "title": "map[string]interface{Success",
-            "type": "object"
-        },
         "models.Cola": {
             "title": "Cola",
             "type": "object",
@@ -472,6 +453,12 @@
             "title": "Endpoint",
             "type": "object",
             "properties": {
+                "Atributos": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "Endpoint": {
                     "type": "string"
                 },
@@ -488,10 +475,28 @@
             "type": "object",
             "properties": {
                 "Filtro": {
-                    "$ref": "#/definitions/1083.\u003cnil\u003e.string"
+                    "type": "object"
                 },
                 "NombreCola": {
                     "type": "string"
+                }
+            }
+        },
+        "resRefactor":{
+            "title": "RespuestaAPIRefactor",
+            "type":"object",
+            "properties": {
+                "Success":{
+                    "type":"string"
+                },
+                "Status":{
+                    "type":"boolean"
+                },
+                "Message":{
+                    "type":"string"
+                },
+                "Data":{
+                    "type":"object"
                 }
             }
         },
@@ -505,7 +510,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/1159.0xc0006dc120.false"
+                    "type": "object"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -523,7 +528,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/1849.0xc0006dc2d0.false"
+                    "type": "object"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -555,7 +560,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/2469.0xc0006dc4e0.false"
+                        "type": "object"
                     }
                 },
                 "Version": {

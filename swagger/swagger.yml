@@ -271,16 +271,16 @@ paths:
         "404":
           description: not found resource
 definitions:
-  1083.<nil>.string:
+  1192.<nil>.string:
     title: string
     type: object
-  1159.0xc0006dc120.false:
+  1268.0xc00074eba0.false:
     title: "false"
     type: object
-  1849.0xc0006dc2d0.false:
+  1958.0xc00074ed50.false:
     title: "false"
     type: object
-  2469.0xc0006dc4e0.false:
+  2578.0xc00074ef60.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -326,6 +326,10 @@ definitions:
     title: Endpoint
     type: object
     properties:
+      Atributos:
+        type: array
+        items:
+          type: string
       Endpoint:
         type: string
       Id:
@@ -337,7 +341,7 @@ definitions:
     type: object
     properties:
       Filtro:
-        $ref: '#/definitions/1083.<nil>.string'
+        $ref: '#/definitions/1192.<nil>.string'
       NombreCola:
         type: string
   models.Mensaje:
@@ -348,7 +352,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/1159.0xc0006dc120.false'
+        $ref: '#/definitions/1268.0xc00074eba0.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -360,7 +364,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1849.0xc0006dc2d0.false'
+        $ref: '#/definitions/1958.0xc00074ed50.false'
       DestinatarioId:
         type: array
         items:
@@ -382,7 +386,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2469.0xc0006dc4e0.false'
+          $ref: '#/definitions/2578.0xc00074ef60.false'
       Version:
         type: string
   models.Suscripcion:

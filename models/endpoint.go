@@ -15,4 +15,7 @@ type Endpoint struct {
 
 	//En el caso de topics tipo FIFO, sólo se debe utilizar el valor sqs para el protocolo
 	Protocolo string
+
+	//Atributos opcionales para filtrado de datos por dependencias o cualquier otro filtro
+	Atributos []string
 }
