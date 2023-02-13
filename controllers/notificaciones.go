@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
 
 	"github.com/udistrital/notificacion_mid/helpers"
 	"github.com/udistrital/notificacion_mid/models"
@@ -36,19 +35,7 @@ func (c *NotificacionController) URLMapping() {
 func (c *NotificacionController) PostOneNotif() {
 	var notif models.Notificacion
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/PostOneNotif/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "PostOneNotif")
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &notif)
 	if notif.RemitenteId == "" || (len(notif.DestinatarioId) == 0 && len(notif.Atributos) == 0) || notif.Asunto == "" || notif.Mensaje == "" || notif.ArnTopic == "" {
@@ -76,19 +63,7 @@ func (c *NotificacionController) Subscribe() {
 	var sub models.Suscripcion
 	var atributos = make(map[string]string)
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/Subscribe/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "Suscribe")
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &sub)
 	for _, subscriptor := range sub.Suscritos {
@@ -133,19 +108,8 @@ func (c *NotificacionController) Subscribe() {
 func (c *NotificacionController) CreateTopic() {
 	var topic models.Topic
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/CreateTopic/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "CreateTopic")
+
 	json.Unmarshal(c.Ctx.Input.RequestBody, &topic)
 	if topic.Nombre == "" || topic.Display == "" {
 		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
@@ -167,19 +131,8 @@ func (c *NotificacionController) CreateTopic() {
 // @Failure 400 Error en parametros ingresados
 // @router /topic/ [get]
 func (c *NotificacionController) GetTopics() {
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/GetTopics/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+
+	defer helpers.ErrorController(c.Controller, "GetTopics")
 
 	if respuesta, err := helpers.ListaTopics(); err == nil {
 		c.Ctx.Output.SetStatus(200)
@@ -200,25 +153,13 @@ func (c *NotificacionController) GetTopics() {
 func (c *NotificacionController) VerifSus() {
 	var consulta models.ConsultaSuscripcion
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/VerifSus/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "VerifSus")
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &consulta)
 	if consulta.ArnTopic == "" || consulta.Endpoint == "" {
 		panic(map[string]interface{}{"funcion": "VerifSus", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
-	if respuesta, err := helpers.VerificarSuscripcion(consulta.ArnTopic, consulta.Endpoint); err == nil {
+	if respuesta, err := helpers.VerificarSuscripcion(consulta); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {
@@ -237,19 +178,7 @@ func (c *NotificacionController) VerifSus() {
 func (c *NotificacionController) BorrarTopic() {
 	arn := c.GetString("arnTopic")
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarTopic/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "BorrarTopic")
 
 	if err := helpers.BorrarTopic(arn); err == nil {
 		c.Ctx.Output.SetStatus(200)
