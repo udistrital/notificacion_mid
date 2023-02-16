@@ -272,7 +272,7 @@ func VerificarSuscripcion(consulta models.ConsultaSuscripcion) (suscrito bool, o
 	}
 
 	for _, resultado := range results.Subscriptions {
-		if *resultado.Endpoint == consulta.Endpoint && *resultado.Owner == consulta.Id {
+		if *resultado.Endpoint == consulta.Endpoint {
 			return true, nil
 		}
 	}
