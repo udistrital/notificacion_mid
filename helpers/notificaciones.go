@@ -270,7 +270,7 @@ func VerificarSuscripcion(consulta models.ConsultaSuscripcion) (suscrito bool, o
 		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err.Error(), "status": "502"}
 		return false, outputError
 	}
-
+	logs.Debug(results)
 	for _, resultado := range results.Subscriptions {
 		if *resultado.Endpoint == consulta.Endpoint {
 			return true, nil
