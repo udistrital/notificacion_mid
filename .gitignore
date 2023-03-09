@@ -4,5 +4,7 @@ notificacion_mid
 main
 .scannerwork/
 swagger/**
-!swagger/swagger.json
-!swagger/swagger.yml
+!swagger/*.json
+!swagger/*.yml
+*.exe
+*.exe~

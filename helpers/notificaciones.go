@@ -242,7 +242,7 @@ func CrearTopic(topic models.Topic) (arn string, outputError map[string]interfac
 	return *results.TopicArn, nil
 }
 
-func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputError map[string]interface{}) {
+func VerificarSuscripcion(consulta models.ConsultaSuscripcion) (suscrito bool, outputError map[string]interface{}) {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -261,7 +261,7 @@ func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputErr
 	client := sns.NewFromConfig(cfg)
 
 	input := &sns.ListSubscriptionsByTopicInput{
-		TopicArn: &arn,
+		TopicArn: &consulta.ArnTopic,
 	}
 
 	results, err := client.ListSubscriptionsByTopic(context.TODO(), input)
@@ -270,9 +270,9 @@ func VerificarSuscripcion(arn string, endpoint string) (suscrito bool, outputErr
 		outputError = map[string]interface{}{"funcion": "/CrearTopic", "err": err.Error(), "status": "502"}
 		return false, outputError
 	}
-
+	logs.Debug(results)
 	for _, resultado := range results.Subscriptions {
-		if *resultado.Endpoint == endpoint {
+		if *resultado.Endpoint == consulta.Endpoint {
 			return true, nil
 		}
 	}

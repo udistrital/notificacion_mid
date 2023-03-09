@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
 	"github.com/udistrital/notificacion_mid/helpers"
 	"github.com/udistrital/notificacion_mid/models"
 )
@@ -36,19 +35,7 @@ func (c *ColasController) URLMapping() {
 func (c *ColasController) CrearCola() {
 	var cola models.Cola
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/CrearCola/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "CrearCola")
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &cola)
 	if cola.NombreCola == "" {
@@ -74,19 +61,7 @@ func (c *ColasController) CrearCola() {
 // @Failure 400 Error en parametros ingresados
 // @router /mensajes [get]
 func (c *ColasController) RecibirMensajes() {
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/RecibirMensaje/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "RecibirMensajes")
 
 	tiempoOcultoStr := c.GetString("tiempoOculto")
 	if tiempoOcultoStr == "" {
@@ -130,19 +105,7 @@ func (c *ColasController) RecibirMensajes() {
 func (c *ColasController) EsperarMensajes() {
 	filtro := make(map[string]string)
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/EsperarMensajes/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "EsperarMensajes")
 
 	tiempoEsperaStr := c.GetString("tiempoEspera")
 	cantidadStr := c.GetString("cantidad")
@@ -190,19 +153,8 @@ func (c *ColasController) EsperarMensajes() {
 func (c *ColasController) BorrarMensaje() {
 	colaStr := c.Ctx.Input.Param(":cola")
 	var mensaje models.Mensaje
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarMensaje/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+
+	defer helpers.ErrorController(c.Controller, "BorrarMensaje")
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &mensaje)
 	if mensaje.ReceiptHandle == "" {
@@ -228,19 +180,7 @@ func (c *ColasController) BorrarMensaje() {
 func (c *ColasController) BorrarMensajeFiltro() {
 	var filtro models.Filtro
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarMensajeFiltro/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "BorrarMensajeFiltro")
 
 	json.Unmarshal(c.Ctx.Input.RequestBody, &filtro)
 	if filtro.NombreCola == "" {
@@ -266,19 +206,7 @@ func (c *ColasController) BorrarMensajeFiltro() {
 func (c *ColasController) BorrarCola() {
 	colaStr := c.Ctx.Input.Param(":cola")
 
-	defer func() {
-		if err := recover(); err != nil {
-			logs.Error(err)
-			localError := err.(map[string]interface{})
-			c.Data["message"] = (beego.AppConfig.String("appname") + "/BorrarCola/" + (localError["funcion"]).(string))
-			c.Data["data"] = (localError["err"])
-			if status, ok := localError["status"]; ok {
-				c.Abort(status.(string))
-			} else {
-				c.Abort("404")
-			}
-		}
-	}()
+	defer helpers.ErrorController(c.Controller, "BorrarCola")
 
 	if err := helpers.BorrarCola(colaStr); err == nil {
 		c.Ctx.Output.SetStatus(200)
