@@ -273,7 +273,21 @@ func VerificarSuscripcion(consulta models.ConsultaSuscripcion) (suscrito bool, o
 	logs.Debug(results)
 	for _, resultado := range results.Subscriptions {
 		if *resultado.Endpoint == consulta.Endpoint {
-			return true, nil
+			inputSusArn := &sns.GetSubscriptionAttributesInput{
+				SubscriptionArn: *&resultado.SubscriptionArn,
+			}
+			attributesSus, err := client.GetSubscriptionAttributes(context.TODO(), inputSusArn)
+			if err == nil {
+				if PendingConfirmation, err := strconv.ParseBool(attributesSus.Attributes["PendingConfirmation"]); err == nil {
+					if !PendingConfirmation {
+						//Esta suscrito y confirmo la suscripcion
+						return true, nil
+					} else {
+						//Esta suscrito y no ha confirmado la suscripcion
+						return false, nil
+					}
+				}
+			}
 		}
 	}
 	return
