@@ -8,3 +8,5 @@ swagger/**
 !swagger/*.yml
 *.exe
 *.exe~
+go.mod
+go.sum
