@@ -28,8 +28,7 @@
                         "name": "cola",
                         "description": "Nombre de la cola a borrar",
                         "required": true,
-                        "type": "string",
-                        "pattern": "[^.]$"
+                        "type": "string"
                     }
                 ],
                 "responses": {
@@ -227,6 +226,37 @@
                 }
             }
         },
+        "/email/enviar_email/": {
+            "post": {
+                "tags": [
+                    "email"
+                ],
+                "description": "Envia un correo a los destinatarios elegidos",
+                "operationId": "EnviarEmailController.PostSendEmail",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body de la inputicación",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.inputicacion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
         "/notificaciones/enviar/": {
             "post": {
                 "tags": [
@@ -249,7 +279,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -286,7 +316,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -334,7 +364,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string}",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -363,7 +393,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string }",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -398,6 +428,26 @@
         }
     },
     "definitions": {
+        "1192.\u003cnil\u003e.string": {
+            "title": "string",
+            "type": "object"
+        },
+        "7133.0xc00040cf00.false": {
+            "title": "false",
+            "type": "object"
+        },
+        "7823.0xc00040d050.false": {
+            "title": "false",
+            "type": "object"
+        },
+        "8443.0xc00040d200.false": {
+            "title": "false",
+            "type": "object"
+        },
+        "map[string]interface{Success": {
+            "title": "map[string]interface{Success",
+            "type": "object"
+        },
         "models.Cola": {
             "title": "Cola",
             "type": "object",
@@ -475,28 +525,10 @@
             "type": "object",
             "properties": {
                 "Filtro": {
-                    "type": "object"
+                    "$ref": "#/definitions/1192.\u003cnil\u003e.string"
                 },
                 "NombreCola": {
                     "type": "string"
-                }
-            }
-        },
-        "resRefactor":{
-            "title": "RespuestaAPIRefactor",
-            "type":"object",
-            "properties": {
-                "Success":{
-                    "type":"string"
-                },
-                "Status":{
-                    "type":"boolean"
-                },
-                "Message":{
-                    "type":"string"
-                },
-                "Data":{
-                    "type":"object"
                 }
             }
         },
@@ -510,7 +542,7 @@
                     }
                 },
                 "Body": {
-                    "type": "object"
+                    "$ref": "#/definitions/7133.0xc00040cf00.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -528,7 +560,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "type": "object"
+                    "$ref": "#/definitions/7823.0xc00040d050.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -560,7 +592,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "type": "object"
+                        "$ref": "#/definitions/8443.0xc00040d200.false"
                     }
                 },
                 "Version": {
@@ -597,6 +629,10 @@
                     "type": "string"
                 }
             }
+        },
+        "models.inputicacion": {
+            "title": "inputicacion",
+            "type": "object"
         }
     },
     "tags": [
@@ -607,6 +643,10 @@
         {
             "name": "colas",
             "description": "ColasController operations for Colas\n"
+        },
+        {
+            "name": "email",
+            "description": "EnviarEmailController operations for inputicacion\n"
         }
     ]
 }
