@@ -46,6 +46,7 @@ func SendEmail(input models.SendEmailInput) (result *ses.SendRawEmailOutput, out
 
 		svc := ses.New(sess)
 
+		//svc.CreateTemplate()
 		resultado, err := svc.SendRawEmail(&inputRaw)
 
 		result = resultado
@@ -129,6 +130,78 @@ func formatSendRawEmailInput(input models.SendEmailInput) (result ses.SendRawEma
 	if err := result.Validate(); err != nil {
 
 		outputError = map[string]interface{}{"funcion": "/SendEmail/formatSendRawEmailInput", "err": err.Error(), "status": "502"}
+	}
+	return
+}
+
+func CreateEmailTemplate(input ses.CreateTemplateInput) (result *ses.CreateTemplateOutput, outputError map[string]interface{}) {
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1")},
+	)
+
+	svc := ses.New(sess)
+
+	res, err := svc.CreateTemplate(&input)
+
+	if err != nil {
+		outputError = map[string]interface{}{"funcion": "/SendEmail", "err": err.Error(), "status": "502"}
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeAlreadyExistsException:
+				fmt.Println(ses.ErrCodeAlreadyExistsException, aerr.Error())
+			case ses.ErrCodeInvalidTemplateException:
+				fmt.Println(ses.ErrCodeInvalidTemplateException, aerr.Error())
+			case ses.ErrCodeLimitExceededException:
+				fmt.Println(ses.ErrCodeLimitExceededException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return nil, outputError
+	} else {
+		result = res
+	}
+	return
+}
+
+func SendTemplatedEmail(input ses.SendBulkTemplatedEmailInput) (result *ses.SendBulkTemplatedEmailOutput, outputError map[string]interface{}) {
+
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1")},
+	)
+
+	svc := ses.New(sess)
+
+	//svc.CreateTemplate()
+	resultado, err := svc.SendBulkTemplatedEmail(&input)
+
+	result = resultado
+	// Display error messages if they occur.
+	if err != nil {
+		outputError = map[string]interface{}{"funcion": "/SendEmail", "err": err.Error(), "status": "502"}
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeMessageRejected:
+				fmt.Println(ses.ErrCodeMessageRejected, aerr.Error())
+			case ses.ErrCodeConfigurationSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
+			case ses.ErrCodeTemplateDoesNotExistException:
+				fmt.Println(ses.ErrCodeTemplateDoesNotExistException, aerr.Error())
+			case ses.ErrCodeConfigurationSetSendingPausedException:
+				fmt.Println(ses.ErrCodeConfigurationSetSendingPausedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
 	}
 	return
 }
