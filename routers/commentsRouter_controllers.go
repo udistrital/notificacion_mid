@@ -123,4 +123,22 @@ func init() {
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"],
+		beego.ControllerComments{
+			Method:           "CreateEmailTemplate",
+			Router:           "/create_email_template/",
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"],
+		beego.ControllerComments{
+			Method:           "PostSendTemplatedEmail",
+			Router:           "/enviar_templated_email/",
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
 }
