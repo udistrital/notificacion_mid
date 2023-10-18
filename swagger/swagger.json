@@ -226,6 +226,37 @@
                 }
             }
         },
+        "/email/create_email_template/": {
+            "post": {
+                "tags": [
+                    "email"
+                ],
+                "description": "Crea un template para un correo personalizado",
+                "operationId": "EnviarEmailController.CreateEmailTemplate",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body ses.CreateTemplateInput struct",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ses.CreateTemplateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
         "/email/enviar_email/": {
             "post": {
                 "tags": [
@@ -241,6 +272,37 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/models.inputicacion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
+        "/email/enviar_templated_email/": {
+            "post": {
+                "tags": [
+                    "email"
+                ],
+                "description": "Envia un correo con template a los destinatarios elegidos",
+                "operationId": "EnviarEmailController.PostSendTemplatedEmail",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body con los destinatarios y data",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ses.SendBulkTemplatedEmailInput"
                         }
                     }
                 ],
@@ -432,15 +494,15 @@
             "title": "string",
             "type": "object"
         },
-        "7133.0xc00040cf00.false": {
+        "7133.0xc0003f33e0.false": {
             "title": "false",
             "type": "object"
         },
-        "7823.0xc00040d050.false": {
+        "7823.0xc0003f3530.false": {
             "title": "false",
             "type": "object"
         },
-        "8443.0xc00040d200.false": {
+        "8443.0xc0003f36e0.false": {
             "title": "false",
             "type": "object"
         },
@@ -542,7 +604,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/7133.0xc00040cf00.false"
+                    "$ref": "#/definitions/7133.0xc0003f33e0.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -560,7 +622,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/7823.0xc00040d050.false"
+                    "$ref": "#/definitions/7823.0xc0003f3530.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -592,7 +654,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/8443.0xc00040d200.false"
+                        "$ref": "#/definitions/8443.0xc0003f36e0.false"
                     }
                 },
                 "Version": {
@@ -632,6 +694,14 @@
         },
         "models.inputicacion": {
             "title": "inputicacion",
+            "type": "object"
+        },
+        "ses.CreateTemplateInput": {
+            "title": "CreateTemplateInput",
+            "type": "object"
+        },
+        "ses.SendBulkTemplatedEmailInput": {
+            "title": "SendBulkTemplatedEmailInput",
             "type": "object"
         }
     },
