@@ -126,18 +126,53 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"],
 		beego.ControllerComments{
-			Method:           "CreateEmailTemplate",
-			Router:           "/create_email_template/",
+			Method:           "PostSendTemplatedEmail",
+			Router:           "/enviar_templated_email/",
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EnviarEmailController"],
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"],
 		beego.ControllerComments{
-			Method:           "PostSendTemplatedEmail",
-			Router:           "/enviar_templated_email/",
+			Method:           "CreateEmailTemplate",
+			Router:           "/",
 			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"],
+		beego.ControllerComments{
+			Method:           "GetEmailTemplate",
+			Router:           "/:templateName",
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"],
+		beego.ControllerComments{
+			Method:           "ListEmailTemplate",
+			Router:           "/",
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"],
+		beego.ControllerComments{
+			Method:           "UpdateEmailTemplate",
+			Router:           "/",
+			AllowHTTPMethods: []string{"put"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:EmailTemplateController"],
+		beego.ControllerComments{
+			Method:           "DeleteEmailTemplate",
+			Router:           "/:templateName",
+			AllowHTTPMethods: []string{"delete"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})

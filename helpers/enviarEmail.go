@@ -2,15 +2,17 @@ package helpers
 
 import (
 	//"context"
-	//"encoding/json"
+	"encoding/json"
 	//"strconv"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	//"time"
-
+	//"github.com/udistrital/utils_oas/formatdata"
 	//"github.com/astaxie/beego/logs"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -18,22 +20,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/udistrital/notificacion_mid/models"
 )
-
-// const (
-// 	// The subject line for the email.
-// 	Subject = "Amazon SES Test (AWS SDK for Go)"
-
-// 	// The HTML body for the email.
-// 	HtmlBody = "<h1>Amazon SES Test Email (AWS SDK for Go)</h1><p>This email was sent with " +
-// 		"<a href='https://aws.amazon.com/ses/'>Amazon SES</a> using the " +
-// 		"<a href='https://aws.amazon.com/sdk-for-go/'>AWS SDK for Go</a>.</p>"
-
-// 	//The email body for recipients with non-HTML email clients.
-// 	TextBody = "This email was sent with Amazon SES using the AWS SDK for Go."
-
-// 	// The character encoding for the email.
-// 	CharSet = "UTF-8"
-// )
 
 func SendEmail(input models.SendEmailInput) (result *ses.SendRawEmailOutput, outputError map[string]interface{}) {
 
@@ -134,74 +120,134 @@ func formatSendRawEmailInput(input models.SendEmailInput) (result ses.SendRawEma
 	return
 }
 
-func CreateEmailTemplate(input ses.CreateTemplateInput) (result *ses.CreateTemplateOutput, outputError map[string]interface{}) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")},
-	)
+func SendTemplatedEmail(input models.InputTemplatedEmail) (result *ses.SendRawEmailOutput, outputError map[string]interface{}) {
+	//formatdata.JsonPrint(input)
+	if inputSesTemplate, errFormat := formatSendBulkTemplatedEmailInput(input); errFormat == nil {
+		//formatdata.JsonPrint(inputSesTemplate)
+		sess, _ := session.NewSession(&aws.Config{
+			Region: aws.String("us-east-1")},
+		)
 
-	svc := ses.New(sess)
+		svc := ses.New(sess)
 
-	res, err := svc.CreateTemplate(&input)
+		var testTemplate ses.TestRenderTemplateInput
+		testTemplate.TemplateName = inputSesTemplate.Template
 
-	if err != nil {
-		outputError = map[string]interface{}{"funcion": "/SendEmail", "err": err.Error(), "status": "502"}
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case ses.ErrCodeAlreadyExistsException:
-				fmt.Println(ses.ErrCodeAlreadyExistsException, aerr.Error())
-			case ses.ErrCodeInvalidTemplateException:
-				fmt.Println(ses.ErrCodeInvalidTemplateException, aerr.Error())
-			case ses.ErrCodeLimitExceededException:
-				fmt.Println(ses.ErrCodeLimitExceededException, aerr.Error())
-			default:
-				fmt.Println(aerr.Error())
+		for indexDestinations, dest := range inputSesTemplate.Destinations {
+			//te := "{\"estado\":\"inscrito\",\"fecha\":\"2023-10-20\",\"nombre\":\"Fabian  David Barreto Sanchez\",\"periodo\":\"2024-1\"}"
+			testTemplate.TemplateData = dest.ReplacementTemplateData
+			if renderedTemplate, err := svc.TestRenderTemplate(&testTemplate); err == nil {
+				mimeEmail := renderedTemplate.RenderedTemplate
+				//fmt.Println(*mimeEmail)
+				var ToAddressesString []string
+				for _, address := range dest.Destination.ToAddresses {
+					ToAddressesString = append(ToAddressesString, *address)
+				}
+				var rawEmail string
+				rawEmail = ""
+				rawEmail += "From:" + input.Source + "\n"
+				rawEmail += "To:" + strings.Join(ToAddressesString, ",") + "\n"
+				if len(input.Destinations[indexDestinations].Attachments) != 0 {
+					rawEmail += addAttachmentsEmailMIME(*mimeEmail, input.Destinations[indexDestinations].Attachments)
+				} else {
+
+					rawEmail += *mimeEmail
+				}
+				rawMessage := ses.RawMessage{
+					Data: []byte(rawEmail),
+				}
+				var inputRawEmail ses.SendRawEmailInput
+				inputRawEmail.SetRawMessage(&rawMessage)
+				resultado, err := svc.SendRawEmail(&inputRawEmail)
+				result = resultado
+
+				// Display error messages if they occur.
+				if err != nil {
+					outputError = map[string]interface{}{"funcion": "/SendEmail", "err": err.Error(), "status": "502"}
+					if aerr, ok := err.(awserr.Error); ok {
+						switch aerr.Code() {
+						case ses.ErrCodeMessageRejected:
+							fmt.Println(ses.ErrCodeMessageRejected, aerr.Error())
+						case ses.ErrCodeMailFromDomainNotVerifiedException:
+							fmt.Println(ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
+						case ses.ErrCodeConfigurationSetDoesNotExistException:
+							fmt.Println(ses.ErrCodeConfigurationSetDoesNotExistException, aerr.Error())
+						default:
+							fmt.Println(aerr.Error())
+						}
+					} else {
+						// Print the error, cast err to awserr.Error to get the Code and
+						// Message from an error.
+						fmt.Println(err.Error())
+					}
+				}
+			} else {
+				fmt.Println("fail test", err)
+				outputError = map[string]interface{}{"funcion": "/SendEmail/TestRenderTemplate", "err": err.Error(), "status": "502"}
 			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			fmt.Println(err.Error())
 		}
-		return nil, outputError
 	} else {
-		result = res
+		outputError = errFormat
+	}
+
+	return
+}
+
+func formatSendBulkTemplatedEmailInput(input models.InputTemplatedEmail) (result ses.SendBulkTemplatedEmailInput, outputError map[string]interface{}) {
+
+	result.Source = &input.Source
+	result.Template = &input.Template
+
+	for _, dest := range input.Destinations {
+		var destSES ses.BulkEmailDestination
+		destSES.Destination = dest.Destination
+		if jsonReplaceData, err := json.Marshal(dest.ReplacementTemplateData); err == nil {
+			templateDataString := strconv.Quote(string(jsonReplaceData))
+			templateDataString = templateDataString[1 : len(templateDataString)-1]
+			//fmt.Print(templateDataString)
+			//fmt.Println(templateDataString)
+			templateDataString = strings.ReplaceAll(templateDataString, `\`, ``)
+			//fmt.Println("template data", templateDataString)
+			destSES.ReplacementTemplateData = &templateDataString
+			result.Destinations = append(result.Destinations, &destSES)
+		} else {
+			outputError = map[string]interface{}{"funcion": "/SendEmail/formatSendBulkTemplatedEmailInput", "err": err.Error(), "status": "502"}
+		}
+	}
+
+	if jsonDefaultData, err := json.Marshal(input.DefaultTemplateData); err == nil {
+		templateDataString := strconv.Quote(string(jsonDefaultData))
+		templateDataString = templateDataString[1 : len(templateDataString)-1]
+		templateDataString = strings.ReplaceAll(templateDataString, `\`, ``)
+		result.DefaultTemplateData = &templateDataString
+	} else {
+		outputError = map[string]interface{}{"funcion": "/SendEmail/formatSendBulkTemplatedEmailInput", "err": err.Error(), "status": "502"}
 	}
 	return
 }
 
-func SendTemplatedEmail(input ses.SendBulkTemplatedEmailInput) (result *ses.SendBulkTemplatedEmailOutput, outputError map[string]interface{}) {
-
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")},
-	)
-
-	svc := ses.New(sess)
-
-	//svc.CreateTemplate()
-	resultado, err := svc.SendBulkTemplatedEmail(&input)
-
-	result = resultado
-	// Display error messages if they occur.
-	if err != nil {
-		outputError = map[string]interface{}{"funcion": "/SendEmail", "err": err.Error(), "status": "502"}
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case ses.ErrCodeMessageRejected:
-				fmt.Println(ses.ErrCodeMessageRejected, aerr.Error())
-			case ses.ErrCodeConfigurationSetDoesNotExistException:
-				fmt.Println(ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
-			case ses.ErrCodeTemplateDoesNotExistException:
-				fmt.Println(ses.ErrCodeTemplateDoesNotExistException, aerr.Error())
-			case ses.ErrCodeConfigurationSetSendingPausedException:
-				fmt.Println(ses.ErrCodeConfigurationSetSendingPausedException, aerr.Error())
-			default:
-				fmt.Println(aerr.Error())
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			fmt.Println(err.Error())
+func addAttachmentsEmailMIME(MIMEstring string, attachments []models.Attachment) (MIMEwithAttachments string) {
+	pat := regexp.MustCompile(`boundary=".*."`)
+	s := pat.FindString(MIMEstring)
+	//fmt.Println(s)
+	boundary := strings.Split(s, `"`)[1]
+	indexfinalboundary := len(MIMEstring) - (len(boundary) + 6)
+	var rawAttachments = ""
+	if len(attachments) != 0 {
+		for _, file := range attachments {
+			rawAttachments += fmt.Sprintf("--%s\n", boundary)
+			rawAttachments += fmt.Sprintf("Content-Type:"+*file.ContentType+"; name=\"%s\"\n", *file.FileName) // name
+			rawAttachments += "Content-Transfer-Encoding:base64\n"
+			rawAttachments += fmt.Sprintf("Content-Disposition:attachment;filename=\"%s\"\n", *file.FileName) // filename
+			//rawAttachments += "Content-Disposition:inline;name={$file_name}\n"
+			rawAttachments += fmt.Sprintf("Content-ID:<%s>\n", *file.FileName)
+			rawAttachments += "\n"
+			rawAttachments += *file.Base64File + "\n"
+			rawAttachments += "\n"
 		}
-		return
+		MIMEwithAttachments = MIMEstring[:indexfinalboundary] + rawAttachments + MIMEstring[indexfinalboundary:]
+	} else {
+		MIMEwithAttachments = MIMEstring
 	}
 	return
 }
