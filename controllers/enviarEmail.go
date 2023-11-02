@@ -7,7 +7,7 @@ import (
 	//"strings"
 
 	"github.com/astaxie/beego"
-	"github.com/aws/aws-sdk-go/service/ses"
+	//"github.com/aws/aws-sdk-go/service/ses"
 
 	"github.com/udistrital/notificacion_mid/helpers"
 	"github.com/udistrital/notificacion_mid/models"
@@ -21,7 +21,6 @@ type EnviarEmailController struct {
 // URLMapping ...
 func (c *EnviarEmailController) URLMapping() {
 	c.Mapping("PostSendEmail", c.PostSendEmail)
-	c.Mapping("CreateEmailTemplate", c.CreateEmailTemplate)
 	c.Mapping("PostSendTemplatedEmail", c.PostSendTemplatedEmail)
 }
 
@@ -50,31 +49,6 @@ func (c *EnviarEmailController) PostSendEmail() {
 	c.ServeJSON()
 }
 
-// CreateEmailTemplate ...
-// @Title CreateEmailTemplate
-// @Description Crea un template para un correo personalizado
-// @Param	body		body 	ses.CreateTemplateInput	true		"Body ses.CreateTemplateInput struct"
-// @Success 201 {object} map[string]interface{Success string,Status boolean,Message string,Data map[string]interface{}}
-// @Failure 400 Error en parametros ingresados
-// @router /create_email_template/ [post]
-func (c *EnviarEmailController) CreateEmailTemplate() {
-	var input ses.CreateTemplateInput
-
-	defer helpers.ErrorController(c.Controller, "CreateEmailTemplate")
-
-	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &input); err != nil {
-		panic(map[string]interface{}{"funcion": "PostSendEmail", "err": err, "status": "400"})
-	}
-
-	if respuesta, err := helpers.CreateEmailTemplate(input); err == nil {
-		c.Ctx.Output.SetStatus(200)
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"Result": respuesta}}
-	} else {
-		panic(err)
-	}
-	c.ServeJSON()
-}
-
 // PostSendTemplatedEmail ...
 // @Title PostSendTemplatedEmail
 // @Description Envia un correo con template a los destinatarios elegidos
@@ -83,7 +57,7 @@ func (c *EnviarEmailController) CreateEmailTemplate() {
 // @Failure 400 Error en parametros ingresados
 // @router /enviar_templated_email/ [post]
 func (c *EnviarEmailController) PostSendTemplatedEmail() {
-	var input ses.SendBulkTemplatedEmailInput
+	var input models.InputTemplatedEmail
 
 	defer helpers.ErrorController(c.Controller, "PostSendEmail")
 

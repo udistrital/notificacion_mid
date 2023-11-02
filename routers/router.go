@@ -30,6 +30,11 @@ func init() {
 				&controllers.EnviarEmailController{},
 			),
 		),
+		beego.NSNamespace("/template_email",
+			beego.NSInclude(
+				&controllers.EmailTemplateController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }
