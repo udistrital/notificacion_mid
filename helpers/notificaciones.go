@@ -15,7 +15,7 @@ import (
 	"github.com/udistrital/notificacion_mid/models"
 )
 
-func PublicarNotificacion(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
+func Publicar(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
 	tipoString := "String"
 	tipoLista := "String.Array"
 	atributos := make(map[string]types.MessageAttributeValue)
@@ -94,6 +94,25 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 
 	msgId = *result.MessageId
 
+	return
+}
+
+func PublicarNotificacion(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
+	if usuarios, ok := body.Atributos["IdUsuarios"].([]interface{}); ok {
+		delete(body.Atributos, "IdUsuarios")
+		auxIdDeduplicacion := body.IdDeduplicacion
+		for _, usuario := range usuarios {
+			if documento, ok := usuario.(string); ok {
+				mensajeBody := body
+				mensajeBody.IdDeduplicacion = auxIdDeduplicacion + documento
+				mensajeBody.Atributos["IdUsuario"] = documento
+				mensajeBody.IdGrupoMensaje = documento
+				msgId, outputError = Publicar(mensajeBody)
+			}
+		}
+	} else {
+		msgId, outputError = Publicar(body)
+	}
 	return
 }
 
