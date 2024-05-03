@@ -18,6 +18,7 @@ type ColasController struct {
 
 // URLMapping ...
 func (c *ColasController) URLMapping() {
+	c.Mapping("TodosMensajes", c.TodosMensajes)
 	c.Mapping("CrearCola", c.CrearCola)
 	c.Mapping("RecibirMensajes", c.RecibirMensajes)
 	c.Mapping("BorrarMensaje", c.BorrarMensaje)
@@ -211,6 +212,30 @@ func (c *ColasController) BorrarCola() {
 	if err := helpers.BorrarCola(colaStr); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": "Cola eliminada"}
+	} else {
+		panic(err)
+	}
+	c.ServeJSON()
+}
+
+// TodosMensajes ...
+// @Title TodosMensajes
+// @Description Lista hasta 10 mensajes en cola
+// @Param	nombre			query 	string	true	"Nombre de la cola"
+// @Param	documento		query 	int		false	"Documento del usuario"
+// @Success 201 {object} models.Mensaje
+// @Failure 400 Error en parametros ingresados
+// @router /todos [get]
+func (c *ColasController) TodosMensajes() {
+	defer helpers.ErrorController(c.Controller, "TodosMensajes")
+
+	// nombreCola := c.GetString("nombre")
+	// documento := c.GetString("nombre")
+	nombreCola := "colaEstados"
+	documento := "usuario1"
+	if respuesta, err := helpers.RecibirTodosMensajes(nombreCola, documento); err == nil {
+		c.Ctx.Output.SetStatus(200)
+		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {
 		panic(err)
 	}

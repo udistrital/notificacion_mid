@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -463,4 +464,75 @@ func Eliminar(urlCola *string, mensaje models.Mensaje, client *sqs.Client) (outp
 		return outputError
 	}
 	return
+}
+
+func RecibirTodosMensajes(nombre string, documento string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/RecibirTodosMensajes", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	tiempoOculto := 3
+	numMax := 1
+	fmt.Println("************ consulta *****************")
+	respuesta, err := RecibirMensajes(nombre+".fifo", tiempoOculto, numMax)
+	fmt.Println("************ final consulta *****************")
+	if err != nil {
+		return nil, err
+	}
+
+	var listaTodosMensajes []models.Mensaje
+	var listaPendientes []models.Mensaje
+	var listaRevisados []models.Mensaje
+
+	//Recoorrer los mensajes e ir guardandolos y eliminandolos
+	for respuesta != nil {
+		notificacion := respuesta[0]
+		cuerpoNotificacion := notificacion.Body
+		atributosMensaje := cuerpoNotificacion["MessageAttributes"].(map[string]interface{})
+		if atributosMensaje["DocumentoUsuario"].(map[string]interface{})["Value"].(string) == documento {
+			if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "pendiente" {
+				listaPendientes = append([]models.Mensaje{notificacion}, listaPendientes...)
+			} else {
+				listaRevisados = append([]models.Mensaje{notificacion}, listaRevisados...)
+			}
+		}
+		listaTodosMensajes = append(listaTodosMensajes, notificacion)
+		fmt.Println("************ eliminación *****************")
+		BorrarMensaje(nombre+".fifo", notificacion)
+		fmt.Println("************ final eliminación *****************")
+		fmt.Println("************ consulta *****************")
+		respuesta, err = RecibirMensajes(nombre+".fifo", tiempoOculto, numMax)
+		fmt.Println("************ final consulta *****************")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	mensajes = append(mensajes, listaPendientes...)
+	mensajes = append(mensajes, listaRevisados...)
+
+	//Registrar nuevamente todos los mensajes
+	for _, mensaje := range listaTodosMensajes {
+		cuerpoMensaje := mensaje.Body
+		data := models.Notificacion{
+			ArnTopic: cuerpoMensaje["TopicArn"].(string),
+			Asunto:   cuerpoMensaje["Subject"].(string),
+			Atributos: map[string]interface{}{
+				"DocumentoUsuario": cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
+				"EstadoMensaje":    cuerpoMensaje["MessageAttributes"].(map[string]interface{})["EstadoMensaje"].(map[string]interface{})["Value"].(string),
+			},
+			DestinatarioId:  []string{"id" + nombre},
+			IdDeduplicacion: fmt.Sprintf("%d", time.Now().UnixNano()),
+			IdGrupoMensaje:  cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
+			Mensaje:         cuerpoMensaje["Message"].(string),
+			RemitenteId:     cuerpoMensaje["MessageAttributes"].(map[string]interface{})["Remitente"].(map[string]interface{})["Value"].(string),
+		}
+		fmt.Println("************ publicar *****************")
+		PublicarNotificacion(data)
+		fmt.Println("************ terminar *****************")
+	}
+	return mensajes, nil
 }
