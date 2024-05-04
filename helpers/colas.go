@@ -148,6 +148,138 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 	return
 }
 
+func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	nombreAWS := beego.BConfig.RunMode + "-" + nombre
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+		return nil, outputError
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &nombreAWS,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+		return nil, outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
+	var listaTodosMensajes []models.Mensaje
+	var listaPendientes []models.Mensaje
+	var listaRevisados []models.Mensaje
+
+	input := &sqs.ReceiveMessageInput{
+		MessageAttributeNames: []string{
+			string(types.QueueAttributeNameAll),
+		},
+		QueueUrl:            queueURL,
+		MaxNumberOfMessages: 10,
+		VisibilityTimeout:   3,
+		WaitTimeSeconds:     *aws.Int32(5),
+	}
+
+	for {
+		// Obtener mensajes
+		result, err := client.ReceiveMessage(context.TODO(), input)
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+			return nil, outputError
+		}
+
+		if len(result.Messages) == 0 {
+			break
+		}
+
+		var loteMensajes []models.Mensaje
+
+		// Crear lote de mensajes  y guardado
+		for _, m := range result.Messages {
+			var body map[string]interface{}
+			json.Unmarshal([]byte(*m.Body), &body)
+			mensaje := models.Mensaje{Attributes: m.Attributes, Body: body, ReceiptHandle: *m.ReceiptHandle}
+			loteMensajes = append(loteMensajes, mensaje)
+
+			// Guardar mensajes(pendientes y revisados), si corresponde al documento de un usuario
+			atributosMensaje := mensaje.Body["MessageAttributes"].(map[string]interface{})
+			if atributosMensaje["DocumentoUsuario"].(map[string]interface{})["Value"].(string) == documento {
+				if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "pendiente" {
+					listaPendientes = append([]models.Mensaje{mensaje}, listaPendientes...)
+				} else if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "revisado" {
+					listaRevisados = append([]models.Mensaje{mensaje}, listaRevisados...)
+				}
+			}
+			listaTodosMensajes = append(listaTodosMensajes, mensaje)
+		}
+
+		// Eliminar lote de mensajes
+		entries := make([]types.DeleteMessageBatchRequestEntry, len(loteMensajes))
+		for msgIndex := range loteMensajes {
+			entries[msgIndex].Id = aws.String(fmt.Sprintf("%v", msgIndex))
+			entries[msgIndex].ReceiptHandle = &loteMensajes[msgIndex].ReceiptHandle
+		}
+
+		_, err = client.DeleteMessageBatch(context.TODO(), &sqs.DeleteMessageBatchInput{
+			Entries:  entries,
+			QueueUrl: queueURL,
+		})
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+			return nil, outputError
+		}
+	}
+
+	// Filtrar por mensajes en estado pendiente y luego por mensajes en estado revisado
+	mensajes = append(mensajes, listaPendientes...)
+	if numRevisados > len(listaRevisados) || numRevisados == -1 {
+		mensajes = append(mensajes, listaRevisados...)
+	} else {
+		mensajes = append(mensajes, listaRevisados[:numRevisados]...)
+	}
+
+	//Registrar nuevamente todos los mensajes
+	for _, mensaje := range listaTodosMensajes {
+		cuerpoMensaje := mensaje.Body
+		data := models.Notificacion{
+			ArnTopic: cuerpoMensaje["TopicArn"].(string),
+			Asunto:   cuerpoMensaje["Subject"].(string),
+			Atributos: map[string]interface{}{
+				"DocumentoUsuario": cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
+				"EstadoMensaje":    cuerpoMensaje["MessageAttributes"].(map[string]interface{})["EstadoMensaje"].(map[string]interface{})["Value"].(string),
+			},
+			DestinatarioId:  []string{"id" + strings.TrimSuffix(nombre, ".fifo")},
+			IdDeduplicacion: fmt.Sprintf("%d", time.Now().UnixNano()),
+			IdGrupoMensaje:  cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
+			Mensaje:         cuerpoMensaje["Message"].(string),
+			RemitenteId:     cuerpoMensaje["MessageAttributes"].(map[string]interface{})["Remitente"].(map[string]interface{})["Value"].(string),
+		}
+
+		_, err := PublicarNotificacion(data)
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err, "status": "502"}
+		}
+	}
+	return mensajes, nil
+}
+
 func EsperarMensajes(nombre string, tiempoEspera int, cantidad int, filtro map[string]string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
 
 	defer func() {
@@ -464,75 +596,4 @@ func Eliminar(urlCola *string, mensaje models.Mensaje, client *sqs.Client) (outp
 		return outputError
 	}
 	return
-}
-
-func RecibirTodosMensajes(nombre string, documento string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
-	defer func() {
-		if err := recover(); err != nil {
-			outputError = map[string]interface{}{"funcion": "/RecibirTodosMensajes", "err": err, "status": "502"}
-			panic(outputError)
-		}
-	}()
-
-	tiempoOculto := 3
-	numMax := 1
-	fmt.Println("************ consulta *****************")
-	respuesta, err := RecibirMensajes(nombre+".fifo", tiempoOculto, numMax)
-	fmt.Println("************ final consulta *****************")
-	if err != nil {
-		return nil, err
-	}
-
-	var listaTodosMensajes []models.Mensaje
-	var listaPendientes []models.Mensaje
-	var listaRevisados []models.Mensaje
-
-	//Recoorrer los mensajes e ir guardandolos y eliminandolos
-	for respuesta != nil {
-		notificacion := respuesta[0]
-		cuerpoNotificacion := notificacion.Body
-		atributosMensaje := cuerpoNotificacion["MessageAttributes"].(map[string]interface{})
-		if atributosMensaje["DocumentoUsuario"].(map[string]interface{})["Value"].(string) == documento {
-			if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "pendiente" {
-				listaPendientes = append([]models.Mensaje{notificacion}, listaPendientes...)
-			} else {
-				listaRevisados = append([]models.Mensaje{notificacion}, listaRevisados...)
-			}
-		}
-		listaTodosMensajes = append(listaTodosMensajes, notificacion)
-		fmt.Println("************ eliminación *****************")
-		BorrarMensaje(nombre+".fifo", notificacion)
-		fmt.Println("************ final eliminación *****************")
-		fmt.Println("************ consulta *****************")
-		respuesta, err = RecibirMensajes(nombre+".fifo", tiempoOculto, numMax)
-		fmt.Println("************ final consulta *****************")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	mensajes = append(mensajes, listaPendientes...)
-	mensajes = append(mensajes, listaRevisados...)
-
-	//Registrar nuevamente todos los mensajes
-	for _, mensaje := range listaTodosMensajes {
-		cuerpoMensaje := mensaje.Body
-		data := models.Notificacion{
-			ArnTopic: cuerpoMensaje["TopicArn"].(string),
-			Asunto:   cuerpoMensaje["Subject"].(string),
-			Atributos: map[string]interface{}{
-				"DocumentoUsuario": cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
-				"EstadoMensaje":    cuerpoMensaje["MessageAttributes"].(map[string]interface{})["EstadoMensaje"].(map[string]interface{})["Value"].(string),
-			},
-			DestinatarioId:  []string{"id" + nombre},
-			IdDeduplicacion: fmt.Sprintf("%d", time.Now().UnixNano()),
-			IdGrupoMensaje:  cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
-			Mensaje:         cuerpoMensaje["Message"].(string),
-			RemitenteId:     cuerpoMensaje["MessageAttributes"].(map[string]interface{})["Remitente"].(map[string]interface{})["Value"].(string),
-		}
-		fmt.Println("************ publicar *****************")
-		PublicarNotificacion(data)
-		fmt.Println("************ terminar *****************")
-	}
-	return mensajes, nil
 }
