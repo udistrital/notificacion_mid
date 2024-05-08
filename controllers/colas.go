@@ -98,6 +98,7 @@ func (c *ColasController) RecibirMensajes() {
 // @Description Lista todos los mensajes de una cola por el documento de un usuario
 // @Param	nombre			query 	string	true	"Nombre de la cola"
 // @Param	documento		query 	int		true	"Documento del usuario"
+// @Param	id				query 	string	false	"Id del mensaje que requiera cambiar de estado a revisado"
 // @Param	numRevisados	query 	int		false	"Cantidad de mensajes revisados a recibir, seguidos de los mensajes pendientes. Por defecto se recibiran 5 si la cantidad de mensajes revisados es igual o mayor a este valor, de lo contrario se recibiran la cantidad de mensajes revisados disponibles. Para obtener todos, asignar el valor de -1"
 // @Success 201 {object} models.Mensaje
 // @Failure 400 Error en parametros ingresados
@@ -107,6 +108,7 @@ func (c *ColasController) RecibirMensajesPorUsuario() {
 
 	nombreCola := c.GetString("nombre")
 	documento := c.GetString("documento")
+	id := c.GetString("id")
 
 	numMaxRevisadosStr := c.GetString("numRevisados")
 	if numMaxRevisadosStr == "" {
@@ -118,7 +120,7 @@ func (c *ColasController) RecibirMensajesPorUsuario() {
 		panic(map[string]interface{}{"funcion": "RecibirMensajesPorUsuario", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if respuesta, err := helpers.RecibirMensajesPorUsuario(nombreCola, documento, numRevisados); err == nil {
+	if respuesta, err := helpers.RecibirMensajesPorUsuario(nombreCola, documento, numRevisados, id); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {

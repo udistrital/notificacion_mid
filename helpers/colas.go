@@ -148,7 +148,7 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 	return
 }
 
-func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int, id string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
 			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err, "status": "502"}
@@ -194,6 +194,7 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 		WaitTimeSeconds:     *aws.Int32(5),
 	}
 
+	var auxMenRef models.Mensaje
 	for {
 		// Obtener mensajes
 		result, err := client.ReceiveMessage(context.TODO(), input)
@@ -216,16 +217,40 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 			mensaje := models.Mensaje{Attributes: m.Attributes, Body: body, ReceiptHandle: *m.ReceiptHandle}
 			loteMensajes = append(loteMensajes, mensaje)
 
-			// Guardar mensajes(pendientes y revisados), si corresponde al documento de un usuario
 			atributosMensaje := mensaje.Body["MessageAttributes"].(map[string]interface{})
+
+			//Cambiar el estado de un mensaje a revisado
+			if id != "" {
+				if ref, ok := atributosMensaje["IdReferencia"].(map[string]interface{}); ok {
+					if idRef, ok := ref["Value"].(string); ok && id == idRef {
+						if estado, ok := atributosMensaje["EstadoMensaje"].(map[string]interface{}); ok {
+							estado["Value"] = "revisado"
+							auxMenRef = mensaje
+						}
+					}
+				}
+			}
+
+			// Guardar mensajes(pendientes y revisados), si corresponde al documento de un usuario
 			if atributosMensaje["DocumentoUsuario"].(map[string]interface{})["Value"].(string) == documento {
 				if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "pendiente" {
 					listaPendientes = append([]models.Mensaje{mensaje}, listaPendientes...)
 				} else if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "revisado" {
-					listaRevisados = append([]models.Mensaje{mensaje}, listaRevisados...)
+					if atributosMensaje["IdReferencia"].(map[string]interface{})["Value"].(string) != id {
+						listaRevisados = append([]models.Mensaje{mensaje}, listaRevisados...)
+					}
 				}
 			}
-			listaTodosMensajes = append(listaTodosMensajes, mensaje)
+
+			refId, ok := atributosMensaje["IdReferencia"].(map[string]interface{})
+			if ok {
+				value := refId["Value"].(string)
+				if value != id {
+					listaTodosMensajes = append(listaTodosMensajes, mensaje)
+				}
+			} else {
+				listaTodosMensajes = append(listaTodosMensajes, mensaje)
+			}
 		}
 
 		// Eliminar lote de mensajes
@@ -246,6 +271,11 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 		}
 	}
 
+	if id != "" {
+		listaRevisados = append([]models.Mensaje{auxMenRef}, listaRevisados...)
+		listaTodosMensajes = append(listaTodosMensajes, auxMenRef)
+	}
+
 	// Filtrar por mensajes en estado pendiente y luego por mensajes en estado revisado
 	mensajes = append(mensajes, listaPendientes...)
 	if numRevisados > len(listaRevisados) || numRevisados == -1 {
@@ -257,18 +287,25 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 	//Registrar nuevamente todos los mensajes
 	for _, mensaje := range listaTodosMensajes {
 		cuerpoMensaje := mensaje.Body
+		atributos := cuerpoMensaje["MessageAttributes"].(map[string]interface{})
 		data := models.Notificacion{
 			ArnTopic: cuerpoMensaje["TopicArn"].(string),
 			Asunto:   cuerpoMensaje["Subject"].(string),
 			Atributos: map[string]interface{}{
-				"DocumentoUsuario": cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
-				"EstadoMensaje":    cuerpoMensaje["MessageAttributes"].(map[string]interface{})["EstadoMensaje"].(map[string]interface{})["Value"].(string),
+				"DocumentoUsuario": atributos["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
+				"EstadoMensaje":    atributos["EstadoMensaje"].(map[string]interface{})["Value"].(string),
+				"Modulo":           atributos["Modulo"].(map[string]interface{})["Value"].(string),
+				"Plan":             atributos["Plan"].(map[string]interface{})["Value"].(string),
+				"Unidad":           atributos["Unidad"].(map[string]interface{})["Value"].(string),
+				"Vigencia":         atributos["Vigencia"].(map[string]interface{})["Value"].(string),
+				"Trimestre":        atributos["Trimestre"].(map[string]interface{})["Value"].(string),
+				"IdReferencia":     cuerpoMensaje["MessageId"].(string),
 			},
 			DestinatarioId:  []string{"id" + strings.TrimSuffix(nombre, ".fifo")},
 			IdDeduplicacion: fmt.Sprintf("%d", time.Now().UnixNano()),
-			IdGrupoMensaje:  cuerpoMensaje["MessageAttributes"].(map[string]interface{})["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
+			IdGrupoMensaje:  atributos["DocumentoUsuario"].(map[string]interface{})["Value"].(string),
 			Mensaje:         cuerpoMensaje["Message"].(string),
-			RemitenteId:     cuerpoMensaje["MessageAttributes"].(map[string]interface{})["Remitente"].(map[string]interface{})["Value"].(string),
+			RemitenteId:     atributos["Remitente"].(map[string]interface{})["Value"].(string),
 		}
 
 		_, err := PublicarNotificacion(data)
