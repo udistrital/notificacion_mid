@@ -148,7 +148,7 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 	return
 }
 
-func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int, id string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+func RecibirMensajesPorUsuario(nombre string, id_usuario string, numRevisados int, idMensaje string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
 			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err, "status": "502"}
@@ -218,12 +218,20 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 			loteMensajes = append(loteMensajes, mensaje)
 
 			atributosMensaje := mensaje.Body["MessageAttributes"].(map[string]interface{})
+			usuarioDestino, usuarioDestinoOk := atributosMensaje["UsuarioDestino"].(map[string]interface{})
+			estadoMensaje, estadoMensajeOk := atributosMensaje["EstadoMensaje"].(map[string]interface{})
+
+			if !usuarioDestinoOk || !estadoMensajeOk {
+				outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": "Error en estructura de datos", "status": "400"}
+				return nil, outputError
+			}
+
 			refId, refIdOk := atributosMensaje["IdReferencia"].(map[string]interface{})
 
-			//Cambiar el estado de un mensaje a revisado
-			if id != "" && refIdOk {
-				if id == refId["Value"].(string) {
-					atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"] = "revisado"
+			// Cambiar el estado de un mensaje a revisado
+			if idMensaje != "" && refIdOk {
+				if idMensaje == refId["Value"].(string) {
+					estadoMensaje["Value"] = "revisado"
 					auxMenRef = mensaje
 				} else {
 					listaTodosMensajes = append(listaTodosMensajes, mensaje)
@@ -232,12 +240,12 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 				listaTodosMensajes = append(listaTodosMensajes, mensaje)
 			}
 
-			// Guardar mensajes(pendientes y revisados), si corresponde al documento de un usuario
-			if atributosMensaje["UsuarioDestino"].(map[string]interface{})["Value"].(string) == documento {
-				if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "pendiente" {
+			// Guardar mensajes(pendientes y revisados), si corresponde al identificador de un usuario
+			if usuarioDestino["Value"] == id_usuario {
+				if estadoMensaje["Value"] == "pendiente" {
 					listaPendientes = append([]models.Mensaje{mensaje}, listaPendientes...)
-				} else if atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string) == "revisado" {
-					if refIdOk && refId["Value"].(string) != id {
+				} else if estadoMensaje["Value"] == "revisado" {
+					if refIdOk && refId["Value"] != idMensaje {
 						listaRevisados = append([]models.Mensaje{mensaje}, listaRevisados...)
 					}
 				}
@@ -262,7 +270,7 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 		}
 	}
 
-	if id != "" {
+	if idMensaje != "" {
 		listaRevisados = append([]models.Mensaje{auxMenRef}, listaRevisados...)
 		listaTodosMensajes = append(listaTodosMensajes, auxMenRef)
 	}
@@ -276,34 +284,36 @@ func RecibirMensajesPorUsuario(nombre string, documento string, numRevisados int
 	}
 
 	//Registrar nuevamente todos los mensajes
-	for _, mensaje := range listaTodosMensajes {
-		cuerpoMensaje := mensaje.Body
-		atributosMensaje := cuerpoMensaje["MessageAttributes"].(map[string]interface{})
+	for _, mssg := range listaTodosMensajes {
+		cuerpoMensaje := mssg.Body
+		atributos := cuerpoMensaje["MessageAttributes"].(map[string]interface{})
+		remitente := atributos["Remitente"].(map[string]interface{})["Value"].(string)
 
-		atributos := map[string]interface{}{
-			"UsuarioDestino": atributosMensaje["UsuarioDestino"].(map[string]interface{})["Value"].(string),
-			"EstadoMensaje":  atributosMensaje["EstadoMensaje"].(map[string]interface{})["Value"].(string),
-			"IdReferencia":   cuerpoMensaje["MessageId"].(string),
+		// Crear una copia del map
+		mapAtributos := make(map[string]interface{})
+		for key, value := range atributos {
+			mapAtributos[key] = value.(map[string]interface{})["Value"].(string)
 		}
-		if Data, DataOk := atributosMensaje["Data"].(map[string]interface{}); DataOk {
-			atributos["Data"] = Data["Value"].(string)
-		}
+		mapAtributos["IdReferencia"] = cuerpoMensaje["MessageId"].(string)
+
+		// Valores que se añaden por defecto, por lo que es necesario eliminarlos
+		delete(mapAtributos, "Destinatario")
+		delete(mapAtributos, "Remitente")
 
 		body := models.Notificacion{
 			ArnTopic:        cuerpoMensaje["TopicArn"].(string),
 			Asunto:          cuerpoMensaje["Subject"].(string),
-			Atributos:       atributos,
+			Atributos:       mapAtributos,
 			DestinatarioId:  []string{"id" + strings.TrimSuffix(nombre, ".fifo")},
 			IdDeduplicacion: fmt.Sprintf("%d", time.Now().UnixNano()),
-			IdGrupoMensaje:  atributosMensaje["UsuarioDestino"].(map[string]interface{})["Value"].(string),
+			IdGrupoMensaje:  mapAtributos["UsuarioDestino"].(string),
 			Mensaje:         cuerpoMensaje["Message"].(string),
-			RemitenteId:     atributosMensaje["Remitente"].(map[string]interface{})["Value"].(string),
+			RemitenteId:     remitente,
 		}
 
 		_, err := PublicarNotificacion(body)
 		if err != nil {
 			logs.Error(err)
-			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err, "status": "502"}
 		}
 	}
 	return mensajes, nil
