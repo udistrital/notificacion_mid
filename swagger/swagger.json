@@ -191,6 +191,55 @@
                 }
             }
         },
+        "/colas/mensajes/usuario": {
+            "get": {
+                "tags": [
+                    "colas"
+                ],
+                "description": "Lista todos los mensajes de una cola por el identificador de un usuario",
+                "operationId": "ColasController.RecibirMensajesPorUsuario",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "nombre",
+                        "description": "Nombre de la cola",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "usuario",
+                        "description": "Identificador del usuario",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "idMensaje",
+                        "description": "Id del mensaje que requiera cambiar de estado a revisado",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "numRevisados",
+                        "description": "Cantidad de mensajes revisados a recibir, seguidos de los mensajes pendientes. Por defecto se recibiran 5 si la cantidad de mensajes revisados es igual o mayor a este valor, de lo contrario se recibiran la cantidad de mensajes revisados disponibles. Para obtener todos, asignar el valor de -1",
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/models.Mensaje"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
         "/colas/mensajes/{cola}": {
             "post": {
                 "tags": [
@@ -612,15 +661,15 @@
             "title": "string",
             "type": "object"
         },
-        "7547.0xc0004942d0.false": {
+        "7547.0xc000333ec0.false": {
             "title": "false",
             "type": "object"
         },
-        "8237.0xc000494420.false": {
+        "8237.0xc000418060.false": {
             "title": "false",
             "type": "object"
         },
-        "8857.0xc0004945d0.false": {
+        "8857.0xc000418240.false": {
             "title": "false",
             "type": "object"
         },
@@ -722,7 +771,7 @@
                     }
                 },
                 "Body": {
-                    "$ref": "#/definitions/7547.0xc0004942d0.false"
+                    "$ref": "#/definitions/7547.0xc000333ec0.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -740,7 +789,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "$ref": "#/definitions/8237.0xc000494420.false"
+                    "$ref": "#/definitions/8237.0xc000418060.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -772,7 +821,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/8857.0xc0004945d0.false"
+                        "$ref": "#/definitions/8857.0xc000418240.false"
                     }
                 },
                 "Version": {

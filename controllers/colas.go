@@ -97,7 +97,7 @@ func (c *ColasController) RecibirMensajes() {
 // @Title RecibirMensajesPorUsuario
 // @Description Lista todos los mensajes de una cola por el identificador de un usuario
 // @Param	nombre			query 	string	true	"Nombre de la cola"
-// @Param	usuario			query 	int		true	"Identificador del usuario"
+// @Param	usuario			query 	string	true	"Identificador del usuario"
 // @Param	idMensaje		query 	string	false	"Id del mensaje que requiera cambiar de estado a revisado"
 // @Param	numRevisados	query 	int		false	"Cantidad de mensajes revisados a recibir, seguidos de los mensajes pendientes. Por defecto se recibiran 5 si la cantidad de mensajes revisados es igual o mayor a este valor, de lo contrario se recibiran la cantidad de mensajes revisados disponibles. Para obtener todos, asignar el valor de -1"
 // @Success 201 {object} models.Mensaje

@@ -62,14 +62,12 @@ paths:
         type: string
       - in: query
         name: tiempoOculto
-        description: El tiempo en segundos que un mensaje recibido se ocultará en
-          la cola
+        description: El tiempo en segundos que un mensaje recibido se ocultará en la cola
         type: integer
         format: int64
       - in: query
         name: numMax
-        description: Numero máximo de mensajes que se pueden recibir (1-10) Por defecto,
-          su valor es 1
+        description: Numero máximo de mensajes que se pueden recibir (1-10) Por defecto, su valor es 1
         type: integer
         format: int64
       responses:
@@ -82,8 +80,7 @@ paths:
     post:
       tags:
       - colas
-      description: Borra la notificación de la cola según el key y el valor ingresados
-        en el body
+      description: Borra la notificación de la cola según el key y el valor ingresados en el body
       operationId: ColasController.BorrarMensajeFiltro
       parameters:
       - in: body
@@ -124,8 +121,7 @@ paths:
     get:
       tags:
       - colas
-      description: Espera por un tiempo determinado a que los mensajes estén disponibles
-        y devuelve los recibidos en ese intervalo de tiempo
+      description: Espera por un tiempo determinado a que los mensajes estén disponibles y devuelve los recibidos en ese intervalo de tiempo
       operationId: ColasController.EsperarMensajes
       parameters:
       - in: query
@@ -141,17 +137,46 @@ paths:
         format: int64
       - in: query
         name: cantidad
-        description: Cantidad máxima de mensajes a recibir. Esta cantidad debe ser
-          menor a diez veces el tiempo de espera, ya que se pueden obtener máximo
-          10 mensajes por segundo. Por defecto, se recibirán todos
+        description: Cantidad máxima de mensajes a recibir. Esta cantidad debe ser menor a diez veces el tiempo de espera, ya que se pueden obtener máximo 10 mensajes por segundo. Por defecto, se recibirán todos
         type: integer
         format: int64
       - in: query
         name: filtro
-        description: Recepción de mensajes filtrados por metadata. Tiene el funcionamiento
-          de un and, por lo tanto sólo devuelve los valores que cumplan con todo el
-          filtro
+        description: Recepción de mensajes filtrados por metadata. Tiene el funcionamiento de un and, por lo tanto sólo devuelve los valores que cumplan con todo el filtro
         type: string
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.Mensaje'
+        "400":
+          description: Error en parametros ingresados
+  /colas/mensajes/usuario:
+    get:
+      tags:
+      - colas
+      description: Lista todos los mensajes de una cola por el identificador de un usuario
+      operationId: ColasController.RecibirMensajesPorUsuario
+      parameters:
+      - in: query
+        name: nombre
+        description: Nombre de la cola
+        required: true
+        type: string
+      - in: query
+        name: usuario
+        description: Identificador del usuario
+        required: true
+        type: string
+      - in: query
+        name: idMensaje
+        description: Id del mensaje que requiera cambiar de estado a revisado
+        type: string
+      - in: query
+        name: numRevisados
+        description: Cantidad de mensajes revisados a recibir, seguidos de los mensajes pendientes. Por defecto se recibiran 5 si la cantidad de mensajes revisados es igual o mayor a este valor, de lo contrario se recibiran la cantidad de mensajes revisados disponibles. Para obtener todos, asignar el valor de -1
+        type: integer
+        format: int64
       responses:
         "201":
           description: ""
@@ -203,8 +228,7 @@ paths:
     post:
       tags:
       - notificaciones
-      description: Envía una notificación a cualquier suscriptor. La propiedad "Atributos"
-        es opcional
+      description: Envía una notificación a cualquier suscriptor. La propiedad "Atributos" es opcional
       operationId: NotificacionController.PostOneNotif
       parameters:
       - in: body
@@ -323,8 +347,7 @@ paths:
         type: string
       - in: query
         name: maxItems
-        description: Numero máximo de mensajes que se pueden recibir (1-100) Por defecto,
-          su valor es 10
+        description: Numero máximo de mensajes que se pueden recibir (1-100) Por defecto, su valor es 10
         type: integer
         format: int64
       responses:
@@ -413,13 +436,13 @@ definitions:
   1192.<nil>.string:
     title: string
     type: object
-  7547.0xc0004942d0.false:
+  7547.0xc000333ec0.false:
     title: "false"
     type: object
-  8237.0xc000494420.false:
+  8237.0xc000418060.false:
     title: "false"
     type: object
-  8857.0xc0004945d0.false:
+  8857.0xc000418240.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -491,7 +514,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/7547.0xc0004942d0.false'
+        $ref: '#/definitions/7547.0xc000333ec0.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -503,7 +526,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/8237.0xc000494420.false'
+        $ref: '#/definitions/8237.0xc000418060.false'
       DestinatarioId:
         type: array
         items:
@@ -525,7 +548,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/8857.0xc0004945d0.false'
+          $ref: '#/definitions/8857.0xc000418240.false'
       Version:
         type: string
   models.Suscripcion:
