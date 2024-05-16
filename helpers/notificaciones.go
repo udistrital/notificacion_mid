@@ -98,15 +98,15 @@ func Publicar(body models.Notificacion) (msgId string, outputError map[string]in
 }
 
 func PublicarNotificacion(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
-	if usuarios, ok := body.Atributos["IdUsuarios"].([]interface{}); ok {
-		delete(body.Atributos, "IdUsuarios")
+	if usuarios, ok := body.Atributos["UsuariosDestino"].([]interface{}); ok {
+		delete(body.Atributos, "UsuariosDestino")
 		auxIdDeduplicacion := body.IdDeduplicacion
 		for _, usuario := range usuarios {
-			if documento, ok := usuario.(string); ok {
+			if idUsuario, ok := usuario.(string); ok {
 				mensajeBody := body
-				mensajeBody.IdDeduplicacion = auxIdDeduplicacion + documento
-				mensajeBody.Atributos["IdUsuario"] = documento
-				mensajeBody.IdGrupoMensaje = documento
+				mensajeBody.IdDeduplicacion = auxIdDeduplicacion + idUsuario
+				mensajeBody.Atributos["UsuarioDestino"] = idUsuario
+				mensajeBody.IdGrupoMensaje = idUsuario
 				msgId, outputError = Publicar(mensajeBody)
 			}
 		}

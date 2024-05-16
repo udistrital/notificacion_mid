@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -145,6 +146,177 @@ func RecibirMensajes(nombre string, tiempoOculto int, numMax int) (mensajes []mo
 		})
 	}
 	return
+}
+
+func RecibirMensajesPorUsuario(nombre string, id_usuario string, numRevisados int, idMensaje string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err, "status": "502"}
+			panic(outputError)
+		}
+	}()
+
+	nombreAWS := beego.BConfig.RunMode + "-" + nombre
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+		return nil, outputError
+	}
+
+	client := sqs.NewFromConfig(cfg)
+
+	qUInput := &sqs.GetQueueUrlInput{
+		QueueName: &nombreAWS,
+	}
+
+	resultQ, err := client.GetQueueUrl(context.TODO(), qUInput)
+	if err != nil {
+		logs.Error(err)
+		outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+		return nil, outputError
+	}
+
+	queueURL := resultQ.QueueUrl
+
+	var listaTodosMensajes []models.Mensaje
+	var listaPendientes []models.Mensaje
+	var listaRevisados []models.Mensaje
+
+	input := &sqs.ReceiveMessageInput{
+		MessageAttributeNames: []string{
+			string(types.QueueAttributeNameAll),
+		},
+		QueueUrl:            queueURL,
+		MaxNumberOfMessages: 10,
+		VisibilityTimeout:   3,
+		WaitTimeSeconds:     *aws.Int32(5),
+	}
+
+	var auxMenRef models.Mensaje
+	for {
+		// Obtener mensajes
+		result, err := client.ReceiveMessage(context.TODO(), input)
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+			return nil, outputError
+		}
+
+		if len(result.Messages) == 0 {
+			break
+		}
+
+		var loteMensajes []models.Mensaje
+
+		// Crear lote de mensajes  y guardado
+		for _, m := range result.Messages {
+			var body map[string]interface{}
+			json.Unmarshal([]byte(*m.Body), &body)
+			mensaje := models.Mensaje{Attributes: m.Attributes, Body: body, ReceiptHandle: *m.ReceiptHandle}
+			loteMensajes = append(loteMensajes, mensaje)
+
+			atributosMensaje := mensaje.Body["MessageAttributes"].(map[string]interface{})
+			usuarioDestino, usuarioDestinoOk := atributosMensaje["UsuarioDestino"].(map[string]interface{})
+			estadoMensaje, estadoMensajeOk := atributosMensaje["EstadoMensaje"].(map[string]interface{})
+
+			if !usuarioDestinoOk || !estadoMensajeOk {
+				outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": "Error en estructura de datos", "status": "400"}
+				return nil, outputError
+			}
+
+			refId, refIdOk := atributosMensaje["IdReferencia"].(map[string]interface{})
+
+			// Cambiar el estado de un mensaje a revisado
+			if idMensaje != "" && refIdOk {
+				if idMensaje == refId["Value"].(string) {
+					estadoMensaje["Value"] = "revisado"
+					auxMenRef = mensaje
+				} else {
+					listaTodosMensajes = append(listaTodosMensajes, mensaje)
+				}
+			} else {
+				listaTodosMensajes = append(listaTodosMensajes, mensaje)
+			}
+
+			// Guardar mensajes(pendientes y revisados), si corresponde al identificador de un usuario
+			if usuarioDestino["Value"] == id_usuario {
+				if estadoMensaje["Value"] == "pendiente" {
+					listaPendientes = append([]models.Mensaje{mensaje}, listaPendientes...)
+				} else if estadoMensaje["Value"] == "revisado" {
+					if refIdOk && refId["Value"] != idMensaje {
+						listaRevisados = append([]models.Mensaje{mensaje}, listaRevisados...)
+					}
+				}
+			}
+		}
+
+		// Eliminar lote de mensajes
+		entries := make([]types.DeleteMessageBatchRequestEntry, len(loteMensajes))
+		for msgIndex := range loteMensajes {
+			entries[msgIndex].Id = aws.String(fmt.Sprintf("%v", msgIndex))
+			entries[msgIndex].ReceiptHandle = &loteMensajes[msgIndex].ReceiptHandle
+		}
+
+		_, err = client.DeleteMessageBatch(context.TODO(), &sqs.DeleteMessageBatchInput{
+			Entries:  entries,
+			QueueUrl: queueURL,
+		})
+		if err != nil {
+			logs.Error(err)
+			outputError = map[string]interface{}{"funcion": "/RecibirMensajesPorUsuario", "err": err.Error(), "status": "502"}
+			return nil, outputError
+		}
+	}
+
+	if idMensaje != "" {
+		listaRevisados = append([]models.Mensaje{auxMenRef}, listaRevisados...)
+		listaTodosMensajes = append(listaTodosMensajes, auxMenRef)
+	}
+
+	// Filtrar por mensajes en estado pendiente y luego por mensajes en estado revisado
+	mensajes = append(mensajes, listaPendientes...)
+	if numRevisados > len(listaRevisados) || numRevisados == -1 {
+		mensajes = append(mensajes, listaRevisados...)
+	} else {
+		mensajes = append(mensajes, listaRevisados[:numRevisados]...)
+	}
+
+	//Registrar nuevamente todos los mensajes
+	for _, mssg := range listaTodosMensajes {
+		cuerpoMensaje := mssg.Body
+		atributos := cuerpoMensaje["MessageAttributes"].(map[string]interface{})
+		remitente := atributos["Remitente"].(map[string]interface{})["Value"].(string)
+
+		// Crear una copia del map
+		mapAtributos := make(map[string]interface{})
+		for key, value := range atributos {
+			mapAtributos[key] = value.(map[string]interface{})["Value"].(string)
+		}
+		mapAtributos["IdReferencia"] = cuerpoMensaje["MessageId"].(string)
+
+		// Valores que se añaden por defecto, por lo que es necesario eliminarlos
+		delete(mapAtributos, "Destinatario")
+		delete(mapAtributos, "Remitente")
+
+		body := models.Notificacion{
+			ArnTopic:        cuerpoMensaje["TopicArn"].(string),
+			Asunto:          cuerpoMensaje["Subject"].(string),
+			Atributos:       mapAtributos,
+			DestinatarioId:  []string{"id" + strings.TrimSuffix(nombre, ".fifo")},
+			IdDeduplicacion: fmt.Sprintf("%d", time.Now().UnixNano()),
+			IdGrupoMensaje:  mapAtributos["UsuarioDestino"].(string),
+			Mensaje:         cuerpoMensaje["Message"].(string),
+			RemitenteId:     remitente,
+		}
+
+		_, err := PublicarNotificacion(body)
+		if err != nil {
+			logs.Error(err)
+		}
+	}
+	return mensajes, nil
 }
 
 func EsperarMensajes(nombre string, tiempoEspera int, cantidad int, filtro map[string]string) (mensajes []models.Mensaje, outputError map[string]interface{}) {
