@@ -156,7 +156,7 @@ paths:
       tags:
       - colas
       description: Lista todos los mensajes de una cola por el identificador de un usuario
-      operationId: ColasController.RecibirMensajesPorUsuario
+      operationId: ColasController.MensajesPorUsuario
       parameters:
       - in: query
         name: nombre
@@ -436,13 +436,13 @@ definitions:
   1192.<nil>.string:
     title: string
     type: object
-  7547.0xc000333ec0.false:
+  7547.0xc000438f90.false:
     title: "false"
     type: object
-  8237.0xc000418060.false:
+  8237.0xc000439110.false:
     title: "false"
     type: object
-  8857.0xc000418240.false:
+  8857.0xc0004392f0.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -514,7 +514,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/7547.0xc000333ec0.false'
+        $ref: '#/definitions/7547.0xc000438f90.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -526,7 +526,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/8237.0xc000418060.false'
+        $ref: '#/definitions/8237.0xc000439110.false'
       DestinatarioId:
         type: array
         items:
@@ -548,7 +548,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/8857.0xc000418240.false'
+          $ref: '#/definitions/8857.0xc0004392f0.false'
       Version:
         type: string
   models.Suscripcion:

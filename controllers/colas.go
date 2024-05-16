@@ -20,7 +20,7 @@ type ColasController struct {
 func (c *ColasController) URLMapping() {
 	c.Mapping("CrearCola", c.CrearCola)
 	c.Mapping("RecibirMensajes", c.RecibirMensajes)
-	c.Mapping("RecibirMensajesPorUsuario", c.RecibirMensajesPorUsuario)
+	c.Mapping("MensajesPorUsuario", c.MensajesPorUsuario)
 	c.Mapping("BorrarMensaje", c.BorrarMensaje)
 	c.Mapping("BorrarMensajeFiltro", c.BorrarMensajeFiltro)
 	c.Mapping("BorrarCola", c.BorrarCola)
@@ -93,8 +93,8 @@ func (c *ColasController) RecibirMensajes() {
 	c.ServeJSON()
 }
 
-// RecibirMensajesPorUsuario ...
-// @Title RecibirMensajesPorUsuario
+// MensajesPorUsuario ...
+// @Title MensajesPorUsuario
 // @Description Lista todos los mensajes de una cola por el identificador de un usuario
 // @Param	nombre			query 	string	true	"Nombre de la cola"
 // @Param	usuario			query 	string	true	"Identificador del usuario"
@@ -103,8 +103,8 @@ func (c *ColasController) RecibirMensajes() {
 // @Success 201 {object} models.Mensaje
 // @Failure 400 Error en parametros ingresados
 // @router /mensajes/usuario [get]
-func (c *ColasController) RecibirMensajesPorUsuario() {
-	defer helpers.ErrorController(c.Controller, "RecibirMensajesPorUsuario")
+func (c *ColasController) MensajesPorUsuario() {
+	defer helpers.ErrorController(c.Controller, "MensajesPorUsuario")
 
 	nombreCola := c.GetString("nombre")
 	usuario := c.GetString("usuario")
@@ -117,7 +117,7 @@ func (c *ColasController) RecibirMensajesPorUsuario() {
 
 	numRevisados, err := strconv.Atoi(numMaxRevisadosStr)
 	if err != nil || usuario == "" {
-		panic(map[string]interface{}{"funcion": "RecibirMensajesPorUsuario", "err": "Error en parámetros de ingresos", "status": "400"})
+		panic(map[string]interface{}{"funcion": "MensajesPorUsuario", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
 	if respuesta, err := helpers.RecibirMensajesPorUsuario(nombreCola, usuario, numRevisados, idMensaje); err == nil {
