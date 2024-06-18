@@ -78,7 +78,7 @@ func PublicarLote(loteMensajes []models.Mensaje) (outputError map[string]interfa
 	return
 }
 
-func Publicar(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
+func Publicar(body models.Notificacion, retornarInput bool) (msgId interface{}, outputError map[string]interface{}) {
 	tipoString := "String"
 	tipoLista := "String.Array"
 	atributos := make(map[string]types.MessageAttributeValue)
@@ -156,11 +156,32 @@ func Publicar(body models.Notificacion) (msgId string, outputError map[string]in
 	}
 
 	msgId = *result.MessageId
+	if retornarInput {
+		inputMap := map[string]interface{}{
+			"Message":           body.Mensaje,
+			"MessageAttributes": getAtributosConsulta(atributos),
+			"MessageId":         *result.MessageId,
+			"Subject":           body.Asunto,
+			"TopicArn":          body.ArnTopic,
+		}
+		msgId = inputMap
+	}
 
 	return
 }
 
-func PublicarNotificacion(body models.Notificacion) (msgId string, outputError map[string]interface{}) {
+func getAtributosConsulta(atributos map[string]types.MessageAttributeValue) map[string]interface{} {
+	normalized := make(map[string]interface{})
+	for key, value := range atributos {
+		normalized[key] = map[string]interface{}{
+			"Type":  value.DataType,
+			"Value": value.StringValue,
+		}
+	}
+	return normalized
+}
+
+func PublicarNotificacion(body models.Notificacion) (msgId interface{}, outputError map[string]interface{}) {
 	if usuarios, ok := body.Atributos["UsuariosDestino"].([]interface{}); ok {
 		delete(body.Atributos, "UsuariosDestino")
 		auxIdDeduplicacion := body.IdDeduplicacion
@@ -170,11 +191,11 @@ func PublicarNotificacion(body models.Notificacion) (msgId string, outputError m
 				mensajeBody.IdDeduplicacion = auxIdDeduplicacion + idUsuario
 				mensajeBody.Atributos["UsuarioDestino"] = idUsuario
 				mensajeBody.IdGrupoMensaje = idUsuario
-				msgId, outputError = Publicar(mensajeBody)
+				msgId, outputError = Publicar(mensajeBody, true)
 			}
 		}
 	} else {
-		msgId, outputError = Publicar(body)
+		msgId, outputError = Publicar(body, false)
 	}
 	return
 }
