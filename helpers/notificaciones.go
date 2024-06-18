@@ -53,6 +53,10 @@ func PublicarLote(loteMensajes []models.Mensaje) (outputError map[string]interfa
 				StringValue: &valorDato,
 			}
 		}
+		atributos["IdReferencia"] = types.MessageAttributeValue{
+			DataType:    aws.String("String"),
+			StringValue: aws.String(body["MessageId"].(string)),
+		}
 
 		// Entradas de publicación (lista de mensajes)
 		entries[i] = types.PublishBatchRequestEntry{
