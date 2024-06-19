@@ -42,7 +42,7 @@ func (c *NotificacionController) PostOneNotif() {
 		panic(map[string]interface{}{"funcion": "PostOneNotif", "err": "Error en parámetros de ingresos", "status": "400"})
 	}
 
-	if respuesta, err := helpers.PublicarNotificacion(notif); err == nil {
+	if respuesta, err := helpers.PublicarNotificacion(notif, false); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": map[string]interface{}{"MessageId": respuesta}}
 	} else {

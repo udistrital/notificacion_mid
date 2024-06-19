@@ -71,7 +71,7 @@ func (c *WebSocketController) WebSocket() {
 		return
 	}
 
-	// Registrar la conexión bajo el documento de usuario
+	// Registrar la conexión por el documento del usuario (identificador)
 	usuarios[documento] = conn
 	defer delete(usuarios, documento) // Limpiar la conexión al finalizar
 
@@ -93,6 +93,7 @@ func (c *WebSocketController) WebSocket() {
 			continue
 		}
 
+		// Publicar la notificacion a los usuarios destino  de manera individuak y enviar el mensaje al cliente
 		if usuarios, ok := notificacion.Atributos["UsuariosDestino"].([]interface{}); ok {
 			delete(notificacion.Atributos, "UsuariosDestino")
 			auxIdDeduplicacion := notificacion.IdDeduplicacion
@@ -100,33 +101,21 @@ func (c *WebSocketController) WebSocket() {
 				if idUsuario, ok := usuario.(string); ok {
 					mensajeBody := notificacion
 					mensajeBody.IdDeduplicacion = auxIdDeduplicacion + idUsuario
+					// mensajeBody.Atributos["UsuarioDestino"] = idUsuario
 					mensajeBody.Atributos["UsuarioDestino"] = "7230282"
 					mensajeBody.IdGrupoMensaje = idUsuario
-					msg, _ := helpers.Publicar(mensajeBody, true)
+					msg, _ := helpers.PublicarNotificacion(mensajeBody, true)
 
 					modifiedMessage, err := json.Marshal(msg)
 					if err != nil {
-						fmt.Println("Error al codificar mensaje con MsgId:", err)
+						fmt.Println("Error al codificar mensaje:", err)
 						continue
 					}
 
-					if documento == "52505205" {
-						sendMessageToClient("7230282ws", messageType, modifiedMessage)
-					} else if documento == "7230282" {
-						sendMessageToClient("7230282ws", messageType, modifiedMessage)
-					}
+					// sendMessageToClient(idUsuario+"ws", messageType, modifiedMessage)
+					sendMessageToClient("7230282ws", messageType, modifiedMessage)
 				}
 			}
 		}
-
-		// Publicar notificación
-		// msg, errP := helpers.PublicarNotificacion(notificacion)
-		// if errP != nil {
-		// 	fmt.Println("Error al publicar notificacion:", errP)
-		// 	continue
-		// }
-
-		// Convertir la notificación de nuevo a JSON
-
 	}
 }

@@ -53,6 +53,10 @@ func PublicarLote(loteMensajes []models.Mensaje) (outputError map[string]interfa
 				StringValue: &valorDato,
 			}
 		}
+		atributos["IdReferencia"] = types.MessageAttributeValue{
+			DataType:    aws.String("String"),
+			StringValue: aws.String(body["MessageId"].(string)),
+		}
 
 		// Entradas de publicación (lista de mensajes)
 		entries[i] = types.PublishBatchRequestEntry{
@@ -78,7 +82,7 @@ func PublicarLote(loteMensajes []models.Mensaje) (outputError map[string]interfa
 	return
 }
 
-func Publicar(body models.Notificacion, retornarInput bool) (msgId interface{}, outputError map[string]interface{}) {
+func PublicarNotificacion(body models.Notificacion, retornarInput bool) (msgId interface{}, outputError map[string]interface{}) {
 	tipoString := "String"
 	tipoLista := "String.Array"
 	atributos := make(map[string]types.MessageAttributeValue)
@@ -181,24 +185,24 @@ func getAtributosConsulta(atributos map[string]types.MessageAttributeValue) map[
 	return normalized
 }
 
-func PublicarNotificacion(body models.Notificacion) (msgId interface{}, outputError map[string]interface{}) {
-	if usuarios, ok := body.Atributos["UsuariosDestino"].([]interface{}); ok {
-		delete(body.Atributos, "UsuariosDestino")
-		auxIdDeduplicacion := body.IdDeduplicacion
-		for _, usuario := range usuarios {
-			if idUsuario, ok := usuario.(string); ok {
-				mensajeBody := body
-				mensajeBody.IdDeduplicacion = auxIdDeduplicacion + idUsuario
-				mensajeBody.Atributos["UsuarioDestino"] = idUsuario
-				mensajeBody.IdGrupoMensaje = idUsuario
-				msgId, outputError = Publicar(mensajeBody, true)
-			}
-		}
-	} else {
-		msgId, outputError = Publicar(body, false)
-	}
-	return
-}
+// func PublicarNotificacion(body models.Notificacion) (msgId interface{}, outputError map[string]interface{}) {
+// 	if usuarios, ok := body.Atributos["UsuariosDestino"].([]interface{}); ok {
+// 		delete(body.Atributos, "UsuariosDestino")
+// 		auxIdDeduplicacion := body.IdDeduplicacion
+// 		for _, usuario := range usuarios {
+// 			if idUsuario, ok := usuario.(string); ok {
+// 				mensajeBody := body
+// 				mensajeBody.IdDeduplicacion = auxIdDeduplicacion + idUsuario
+// 				mensajeBody.Atributos["UsuarioDestino"] = idUsuario
+// 				mensajeBody.IdGrupoMensaje = idUsuario
+// 				msgId, outputError = Publicar(mensajeBody, true)
+// 			}
+// 		}
+// 	} else {
+// 		msgId, outputError = Publicar(body, false)
+// 	}
+// 	return
+// }
 
 func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string, outputError map[string]interface{}) {
 

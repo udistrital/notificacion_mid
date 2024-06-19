@@ -226,11 +226,11 @@ func RecibirMensajesPorUsuario(nombre string, id_usuario string, numRevisados in
 				return nil, outputError
 			}
 
+			// Cambiar el estado de un mensaje a revisado buscando por IdReferencia, o de lo contrario por MessageId
 			refId, refIdOk := atributosMensaje["IdReferencia"].(map[string]interface{})
-
-			// Cambiar el estado de un mensaje a revisado
-			if idMensaje != "" && refIdOk {
-				if idMensaje == refId["Value"].(string) {
+			msgId, msgIdOk := mensaje.Body["MessageId"].(string)
+			if idMensaje != "" {
+				if refIdOk && idMensaje == refId["Value"].(string) || msgIdOk && idMensaje == msgId {
 					estadoMensaje["Value"] = "revisado"
 					auxMenRef = mensaje
 				} else {
@@ -270,7 +270,9 @@ func RecibirMensajesPorUsuario(nombre string, id_usuario string, numRevisados in
 		}
 	}
 
-	if idMensaje != "" {
+	// Colocar el mensaje cambiado a revisado al inicio de la lista de revisados
+	// y al final de todos los mensajes, para que al registrar y obtener nuevamente este en la primera posición
+	if idMensaje != "" && len(auxMenRef.Body) != 0 {
 		listaRevisados = append([]models.Mensaje{auxMenRef}, listaRevisados...)
 		listaTodosMensajes = append(listaTodosMensajes, auxMenRef)
 	}
