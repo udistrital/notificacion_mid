@@ -40,15 +40,6 @@ func sendMessageToClient(documento string, messageType int, message []byte) erro
 	return conn.WriteMessage(messageType, message)
 }
 
-// Función para broadcast a todos los usuarios
-// func broadcastMessage(messageType int, message []byte) {
-// 	for _, conn := range usuarios {
-// 		if err := conn.WriteMessage(messageType, message); err != nil {
-// 			fmt.Println("Error al enviar mensaje a cliente:", err)
-// 		}
-// 	}
-// }
-
 // WebSocket ...
 // @Title WebSocket
 // @Description Recibir mensaje por medio de webSocket
@@ -93,7 +84,7 @@ func (c *WebSocketController) WebSocket() {
 			continue
 		}
 
-		// Publicar la notificacion a los usuarios destino  de manera individuak y enviar el mensaje al cliente
+		// Publicar la notificacion a los usuarios destino de manera individual y enviar el mensaje al cliente
 		if usuarios, ok := notificacion.Atributos["UsuariosDestino"].([]interface{}); ok {
 			delete(notificacion.Atributos, "UsuariosDestino")
 			auxIdDeduplicacion := notificacion.IdDeduplicacion
@@ -112,8 +103,8 @@ func (c *WebSocketController) WebSocket() {
 						continue
 					}
 
-					// sendMessageToClient(idUsuario+"ws", messageType, modifiedMessage)
-					sendMessageToClient("7230282ws", messageType, modifiedMessage)
+					// sendMessageToClient(idUsuario+"wc", messageType, modifiedMessage)
+					sendMessageToClient("7230282wc", messageType, modifiedMessage)
 				}
 			}
 		}
