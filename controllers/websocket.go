@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/astaxie/beego"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/udistrital/notificacion_mid/helpers"
 	"github.com/udistrital/notificacion_mid/models"
@@ -31,13 +33,18 @@ var (
 	usuarios = make(map[string]*websocket.Conn) // Mapa para almacenar conexiones activas (usuarios)
 )
 
-// Función para enviar mensaje a un usuario específico
-func sendMessageToClient(documento string, messageType int, message []byte) error {
-	conn, ok := usuarios[documento]
-	if !ok {
-		return fmt.Errorf("el usuario %s no está conectado", documento)
+// Función para enviar mensaje a un usuario
+// Se tiene en cuenta si hay varias sesiones iniciadas (comparten el mismo prefijo = documento)
+func sendMessageToClient(prefix string, messageType int, message []byte) {
+	for key, conn := range usuarios {
+		// Separar el documento y el UUID
+		parts := strings.SplitN(key, "-", 2)
+		if len(parts) > 0 && parts[0] == prefix {
+			if err := conn.WriteMessage(messageType, message); err != nil {
+				fmt.Println("Error al enviar mensaje a", key, ":", err)
+			}
+		}
 	}
-	return conn.WriteMessage(messageType, message)
 }
 
 // WebSocket ...
@@ -62,6 +69,10 @@ func (c *WebSocketController) WebSocket() {
 		return
 	}
 
+	// Generar un ID único para la conexión
+	id := uuid.New().String()
+	documento = documento + "-" + id
+
 	// Registrar la conexión por el documento del usuario (identificador)
 	usuarios[documento] = conn
 	defer delete(usuarios, documento) // Limpiar la conexión al finalizar
@@ -71,7 +82,11 @@ func (c *WebSocketController) WebSocket() {
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Error leyendo mensage:", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				fmt.Println("Error leyendo mensaje:", err)
+			} else {
+				fmt.Printf("Usuario desconectado: %s\n", documento)
+			}
 			return
 		}
 		fmt.Printf("Mensaje recibido de %s: %s\n", documento, message)
@@ -92,8 +107,7 @@ func (c *WebSocketController) WebSocket() {
 				if idUsuario, ok := usuario.(string); ok {
 					mensajeBody := notificacion
 					mensajeBody.IdDeduplicacion = auxIdDeduplicacion + idUsuario
-					// mensajeBody.Atributos["UsuarioDestino"] = idUsuario
-					mensajeBody.Atributos["UsuarioDestino"] = "7230282"
+					mensajeBody.Atributos["UsuarioDestino"] = idUsuario
 					mensajeBody.IdGrupoMensaje = idUsuario
 					msg, _ := helpers.PublicarNotificacion(mensajeBody, true)
 
@@ -103,8 +117,7 @@ func (c *WebSocketController) WebSocket() {
 						continue
 					}
 
-					// sendMessageToClient(idUsuario+"wc", messageType, modifiedMessage)
-					sendMessageToClient("7230282wc", messageType, modifiedMessage)
+					sendMessageToClient(idUsuario+"wc", messageType, modifiedMessage)
 				}
 			}
 		}
