@@ -186,4 +186,14 @@ func init() {
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:WebSocketController"] = append(beego.GlobalControllerRouter["github.com/udistrital/notificacion_mid/controllers:WebSocketController"],
+		beego.ControllerComments{
+			Method:           "WebSocket",
+			Router:           "/",
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
 }
