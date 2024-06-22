@@ -284,36 +284,17 @@ func RecibirMensajesPorUsuario(nombre string, id_usuario string, numRevisados in
 	}
 
 	//Registrar nuevamente todos los mensajes
-	for _, mssg := range listaTodosMensajes {
-		cuerpoMensaje := mssg.Body
-		atributos := cuerpoMensaje["MessageAttributes"].(map[string]interface{})
-		remitente := atributos["Remitente"].(map[string]interface{})["Value"].(string)
-
-		// Crear una copia del map
-		mapAtributos := make(map[string]interface{})
-		for key, value := range atributos {
-			mapAtributos[key] = value.(map[string]interface{})["Value"].(string)
+	tamBloque := 10
+	for i := 0; i < len(listaTodosMensajes); i += tamBloque {
+		fin := i + tamBloque
+		if fin > len(listaTodosMensajes) {
+			fin = len(listaTodosMensajes)
 		}
-		mapAtributos["IdReferencia"] = cuerpoMensaje["MessageId"].(string)
+		subLista := listaTodosMensajes[i:fin]
 
-		// Valores que se añaden por defecto, por lo que es necesario eliminarlos
-		delete(mapAtributos, "Destinatario")
-		delete(mapAtributos, "Remitente")
-
-		body := models.Notificacion{
-			ArnTopic:        cuerpoMensaje["TopicArn"].(string),
-			Asunto:          cuerpoMensaje["Subject"].(string),
-			Atributos:       mapAtributos,
-			DestinatarioId:  []string{"id" + strings.TrimSuffix(nombre, ".fifo")},
-			IdDeduplicacion: fmt.Sprintf("%d", time.Now().UnixNano()),
-			IdGrupoMensaje:  mapAtributos["UsuarioDestino"].(string),
-			Mensaje:         cuerpoMensaje["Message"].(string),
-			RemitenteId:     remitente,
-		}
-
-		_, err := PublicarNotificacion(body)
-		if err != nil {
-			logs.Error(err)
+		// Publicar notificaciones por lote de 10 mensajes
+		if errPublish := PublicarLote(subLista); errPublish != nil {
+			logs.Error(errPublish)
 		}
 	}
 	return mensajes, nil
