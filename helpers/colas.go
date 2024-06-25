@@ -195,7 +195,9 @@ func RecibirMensajesPorUsuario(nombre string, id_usuario string, numRevisados in
 	}
 
 	var auxMenRef models.Mensaje
-	for {
+	messagesCount := 0
+
+	for messagesCount < 40 {
 		// Obtener mensajes
 		result, err := client.ReceiveMessage(context.TODO(), input)
 		if err != nil {
@@ -251,6 +253,8 @@ func RecibirMensajesPorUsuario(nombre string, id_usuario string, numRevisados in
 				}
 			}
 		}
+
+		messagesCount += len(result.Messages)
 
 		// Eliminar lote de mensajes
 		entries := make([]types.DeleteMessageBatchRequestEntry, len(loteMensajes))
