@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/udistrital/notificacion_mid/helpers"
-	"github.com/udistrital/notificacion_mid/models"
 )
 
 type WebSocketController struct {
@@ -33,15 +32,15 @@ var (
 	usuarios = make(map[string]*websocket.Conn) // Mapa para almacenar conexiones activas (usuarios)
 )
 
-// Función para enviar mensaje a un usuario
+// Función para enviar la notificación a un usuario
 // Se tiene en cuenta si hay varias sesiones iniciadas (comparten el mismo prefijo = documento)
-func sendMessageToClient(prefix string, messageType int, message []byte) {
+func sendNotificationToClient(prefix string, messageType int, message []byte) {
 	for key, conn := range usuarios {
 		// Separar el documento y el UUID
 		parts := strings.SplitN(key, "-", 2)
 		if len(parts) > 0 && parts[0] == prefix {
 			if err := conn.WriteMessage(messageType, message); err != nil {
-				fmt.Println("Error al enviar mensaje a", key, ":", err)
+				fmt.Println("Error al enviar notificación a", key, ":", err)
 			}
 		}
 	}
@@ -49,8 +48,8 @@ func sendMessageToClient(prefix string, messageType int, message []byte) {
 
 // WebSocket ...
 // @Title WebSocket
-// @Description Recibir mensaje por medio de webSocket
-// @Success 200 {string} Mensaje recibido
+// @Description Recibir notificación por medio de webSocket
+// @Success 200 {string} Notificación recibida
 // @Failure 502 Error de conexión
 // @router / [get]
 func (c *WebSocketController) WebSocket() {
@@ -80,44 +79,44 @@ func (c *WebSocketController) WebSocket() {
 	fmt.Printf("Usuario conectado: %s\n", documento)
 
 	for {
-		messageType, message, err := conn.ReadMessage()
+		// Obtener notificación o comprobar desconexión
+		messageType, messageData, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Println("Error leyendo mensaje:", err)
+				fmt.Println("Error leyendo notificación:", err)
 			} else {
 				fmt.Printf("Usuario desconectado: %s\n", documento)
 			}
 			return
 		}
-		fmt.Printf("Mensaje recibido de %s: %s\n", documento, message)
 
-		// Convertir el mensaje en el modelo Notificacion
-		var notificacion models.Notificacion
-		err = json.Unmarshal(message, &notificacion)
+		var notificacion map[string]interface{}
+		err = json.Unmarshal(messageData, &notificacion)
 		if err != nil {
-			fmt.Println("Error al decodificar mensaje en modelo Notificacion:", err)
+			fmt.Println("Error al decodificar la notificación:", err)
 			continue
 		}
 
-		// Publicar la notificacion a los usuarios destino de manera individual y enviar el mensaje al cliente
-		if usuarios, ok := notificacion.Atributos["UsuariosDestino"].([]interface{}); ok {
-			delete(notificacion.Atributos, "UsuariosDestino")
-			auxIdDeduplicacion := notificacion.IdDeduplicacion
+		fmt.Printf("Notificación recibida de %s: %s\n", documento, notificacion)
+
+		// Registrar la notificación a los usuarios destino de manera individual y enviarla al cliente
+		if usuarios, ok := notificacion["destinatarios"].([]interface{}); ok {
+			delete(notificacion, "destinatarios")
 			for _, usuario := range usuarios {
-				if idUsuario, ok := usuario.(string); ok {
-					mensajeBody := notificacion
-					mensajeBody.IdDeduplicacion = auxIdDeduplicacion + idUsuario
-					mensajeBody.Atributos["UsuarioDestino"] = idUsuario
-					mensajeBody.IdGrupoMensaje = idUsuario
-					msg, _ := helpers.PublicarNotificacion(mensajeBody, true)
+				if _, ok := usuario.(string); ok {
+					// notificacion["destinatario"] = idUsuario
+					notificacion["destinatario"] = "7230282"
 
-					modifiedMessage, err := json.Marshal(msg)
-					if err != nil {
-						fmt.Println("Error al codificar mensaje:", err)
-						continue
+					res, err := helpers.PublicarNotificacionCrud(notificacion)
+					if err == nil {
+						resNotificacion, err := json.Marshal(res["Data"])
+						if err != nil {
+							fmt.Println("Error al codificar notificación:", err)
+							continue
+						}
+						// sendNotificationToClient(idUsuario+"wc", messageType, resNotificacion)
+						sendNotificationToClient("7230282wc", messageType, resNotificacion)
 					}
-
-					sendMessageToClient(idUsuario+"wc", messageType, modifiedMessage)
 				}
 			}
 		}
