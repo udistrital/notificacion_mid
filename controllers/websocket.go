@@ -46,6 +46,16 @@ func sendNotificationToClient(prefix string, messageType int, message []byte) {
 	}
 }
 
+// Función para verificar si un usuario ya existe (está conectado)
+func verifyClient(prefix string) bool {
+	for key := range usuarios {
+		if strings.HasPrefix(key, prefix+"-") {
+			return true
+		}
+	}
+	return false
+}
+
 // WebSocket ...
 // @Title WebSocket
 // @Description Recibir notificación por medio de webSocket
@@ -68,15 +78,17 @@ func (c *WebSocketController) WebSocket() {
 		return
 	}
 
-	// Generar un ID único para la conexión
-	id := uuid.New().String()
-	documento = documento + "-" + id
+	if !verifyClient(documento) {
+		// Generar un ID único para la conexión
+		id := uuid.New().String()
+		documento = documento + "-" + id
 
-	// Registrar la conexión por el documento del usuario (identificador)
-	usuarios[documento] = conn
-	defer delete(usuarios, documento) // Limpiar la conexión al finalizar
+		// Registrar la conexión por el documento del usuario (identificador)
+		usuarios[documento] = conn
+		defer delete(usuarios, documento) // Limpiar la conexión al finalizar
 
-	fmt.Printf("Usuario conectado: %s\n", documento)
+		fmt.Printf("Usuario conectado: %s\n", documento)
+	}
 
 	for {
 		// Obtener notificación o comprobar desconexión
@@ -103,9 +115,8 @@ func (c *WebSocketController) WebSocket() {
 		if usuarios, ok := notificacion["destinatarios"].([]interface{}); ok {
 			delete(notificacion, "destinatarios")
 			for _, usuario := range usuarios {
-				if _, ok := usuario.(string); ok {
-					// notificacion["destinatario"] = idUsuario
-					notificacion["destinatario"] = "7230282"
+				if idUsuario, ok := usuario.(string); ok {
+					notificacion["destinatario"] = idUsuario
 
 					res, err := helpers.PublicarNotificacionCrud(notificacion)
 					if err == nil {
@@ -114,8 +125,7 @@ func (c *WebSocketController) WebSocket() {
 							fmt.Println("Error al codificar notificación:", err)
 							continue
 						}
-						// sendNotificationToClient(idUsuario+"wc", messageType, resNotificacion)
-						sendNotificationToClient("7230282wc", messageType, resNotificacion)
+						sendNotificationToClient(idUsuario+"wc", messageType, resNotificacion)
 					}
 				}
 			}
