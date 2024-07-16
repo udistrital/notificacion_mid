@@ -25,7 +25,7 @@ func PublicarNotificacionCrud(body map[string]interface{}) (map[string]interface
 	return res, nil
 }
 
-func PublicarNotificacion(body models.Notificacion, retornarInput bool) (msgId interface{}, outputError map[string]interface{}) {
+func PublicarNotificacion(body models.Notificacion) (msgId interface{}, outputError map[string]interface{}) {
 	tipoString := "String"
 	tipoLista := "String.Array"
 	atributos := make(map[string]types.MessageAttributeValue)
@@ -103,29 +103,8 @@ func PublicarNotificacion(body models.Notificacion, retornarInput bool) (msgId i
 	}
 
 	msgId = *result.MessageId
-	if retornarInput {
-		inputMap := map[string]interface{}{
-			"Message":           body.Mensaje,
-			"MessageAttributes": getAtributosConsulta(atributos),
-			"MessageId":         *result.MessageId,
-			"Subject":           body.Asunto,
-			"TopicArn":          body.ArnTopic,
-		}
-		msgId = inputMap
-	}
 
 	return
-}
-
-func getAtributosConsulta(atributos map[string]types.MessageAttributeValue) map[string]interface{} {
-	normalized := make(map[string]interface{})
-	for key, value := range atributos {
-		normalized[key] = map[string]interface{}{
-			"Type":  value.DataType,
-			"Value": value.StringValue,
-		}
-	}
-	return normalized
 }
 
 func Suscribir(body models.Suscripcion, atributos map[string]string) (Arn string, outputError map[string]interface{}) {
