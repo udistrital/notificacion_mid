@@ -15,16 +15,6 @@ import (
 	"github.com/udistrital/notificacion_mid/models"
 )
 
-// Registrar una notifcación en notificaciones_crud
-func PublicarNotificacionCrud(body map[string]interface{}) (map[string]interface{}, error) {
-	var res map[string]interface{}
-	err := SendJson("http://"+beego.AppConfig.String("notificacionesCrud")+"/notificacion", "POST", &res, body)
-	if err != nil || !res["Success"].(bool) {
-		return nil, err
-	}
-	return res, nil
-}
-
 func PublicarNotificacion(body models.Notificacion) (msgId interface{}, outputError map[string]interface{}) {
 	tipoString := "String"
 	tipoLista := "String.Array"
