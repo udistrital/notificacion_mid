@@ -20,7 +20,6 @@ type ColasController struct {
 func (c *ColasController) URLMapping() {
 	c.Mapping("CrearCola", c.CrearCola)
 	c.Mapping("RecibirMensajes", c.RecibirMensajes)
-	c.Mapping("MensajesPorUsuario", c.MensajesPorUsuario)
 	c.Mapping("BorrarMensaje", c.BorrarMensaje)
 	c.Mapping("BorrarMensajeFiltro", c.BorrarMensajeFiltro)
 	c.Mapping("BorrarCola", c.BorrarCola)
@@ -85,42 +84,6 @@ func (c *ColasController) RecibirMensajes() {
 	}
 
 	if respuesta, err := helpers.RecibirMensajes(c.GetString("nombre"), tiempoOculto, numMax); err == nil {
-		c.Ctx.Output.SetStatus(200)
-		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
-	} else {
-		panic(err)
-	}
-	c.ServeJSON()
-}
-
-// MensajesPorUsuario ...
-// @Title MensajesPorUsuario
-// @Description Lista todos los mensajes de una cola por el identificador de un usuario
-// @Param	nombre			query 	string	true	"Nombre de la cola"
-// @Param	usuario			query 	string	true	"Identificador del usuario"
-// @Param	idMensaje		query 	string	false	"Id del mensaje que requiera cambiar de estado a revisado"
-// @Param	numRevisados	query 	int		false	"Cantidad de mensajes revisados a recibir, seguidos de los mensajes pendientes. Por defecto se recibiran 5 si la cantidad de mensajes revisados es igual o mayor a este valor, de lo contrario se recibiran la cantidad de mensajes revisados disponibles. Para obtener todos, asignar el valor de -1"
-// @Success 201 {object} models.Mensaje
-// @Failure 400 Error en parametros ingresados
-// @router /mensajes/usuario [get]
-func (c *ColasController) MensajesPorUsuario() {
-	defer helpers.ErrorController(c.Controller, "MensajesPorUsuario")
-
-	nombreCola := c.GetString("nombre")
-	usuario := c.GetString("usuario")
-	idMensaje := c.GetString("idMensaje")
-
-	numMaxRevisadosStr := c.GetString("numRevisados")
-	if numMaxRevisadosStr == "" {
-		numMaxRevisadosStr = "5"
-	}
-
-	numRevisados, err := strconv.Atoi(numMaxRevisadosStr)
-	if err != nil || usuario == "" {
-		panic(map[string]interface{}{"funcion": "MensajesPorUsuario", "err": "Error en parámetros de ingresos", "status": "400"})
-	}
-
-	if respuesta, err := helpers.RecibirMensajesPorUsuario(nombreCola, usuario, numRevisados, idMensaje); err == nil {
 		c.Ctx.Output.SetStatus(200)
 		c.Data["json"] = map[string]interface{}{"Success": true, "Status": "200", "Message": "Successful", "Data": respuesta}
 	} else {
