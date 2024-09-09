@@ -62,14 +62,12 @@ paths:
         type: string
       - in: query
         name: tiempoOculto
-        description: El tiempo en segundos que un mensaje recibido se ocultará en
-          la cola
+        description: El tiempo en segundos que un mensaje recibido se ocultará en la cola
         type: integer
         format: int64
       - in: query
         name: numMax
-        description: Numero máximo de mensajes que se pueden recibir (1-10) Por defecto,
-          su valor es 1
+        description: Numero máximo de mensajes que se pueden recibir (1-10) Por defecto, su valor es 1
         type: integer
         format: int64
       responses:
@@ -82,8 +80,7 @@ paths:
     post:
       tags:
       - colas
-      description: Borra la notificación de la cola según el key y el valor ingresados
-        en el body
+      description: Borra la notificación de la cola según el key y el valor ingresados en el body
       operationId: ColasController.BorrarMensajeFiltro
       parameters:
       - in: body
@@ -124,8 +121,7 @@ paths:
     get:
       tags:
       - colas
-      description: Espera por un tiempo determinado a que los mensajes estén disponibles
-        y devuelve los recibidos en ese intervalo de tiempo
+      description: Espera por un tiempo determinado a que los mensajes estén disponibles y devuelve los recibidos en ese intervalo de tiempo
       operationId: ColasController.EsperarMensajes
       parameters:
       - in: query
@@ -141,16 +137,12 @@ paths:
         format: int64
       - in: query
         name: cantidad
-        description: Cantidad máxima de mensajes a recibir. Esta cantidad debe ser
-          menor a diez veces el tiempo de espera, ya que se pueden obtener máximo
-          10 mensajes por segundo. Por defecto, se recibirán todos
+        description: Cantidad máxima de mensajes a recibir. Esta cantidad debe ser menor a diez veces el tiempo de espera, ya que se pueden obtener máximo 10 mensajes por segundo. Por defecto, se recibirán todos
         type: integer
         format: int64
       - in: query
         name: filtro
-        description: Recepción de mensajes filtrados por metadata. Tiene el funcionamiento
-          de un and, por lo tanto sólo devuelve los valores que cumplan con todo el
-          filtro
+        description: Recepción de mensajes filtrados por metadata. Tiene el funcionamiento de un and, por lo tanto sólo devuelve los valores que cumplan con todo el filtro
         type: string
       responses:
         "201":
@@ -159,12 +151,51 @@ paths:
             $ref: '#/definitions/models.Mensaje'
         "400":
           description: Error en parametros ingresados
+  /email/enviar_email/:
+    post:
+      tags:
+      - email
+      description: Envia un correo a los destinatarios elegidos
+      operationId: EnviarEmailController.PostSendEmail
+      parameters:
+      - in: body
+        name: body
+        description: Body de la inputicación
+        required: true
+        schema:
+          $ref: '#/definitions/models.inputicacion'
+      responses:
+        "201":
+          description: string,Status boolean,Message string,Data map[string]interface{}}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
+  /email/enviar_templated_email/:
+    post:
+      tags:
+      - email
+      description: Envia un correo con template a los destinatarios elegidos
+      operationId: EnviarEmailController.PostSendTemplatedEmail
+      parameters:
+      - in: body
+        name: body
+        description: Body con los destinatarios y data
+        required: true
+        schema:
+          $ref: '#/definitions/ses.SendBulkTemplatedEmailInput'
+      responses:
+        "201":
+          description: string,Status boolean,Message string,Data map[string]interface{}}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
   /notificaciones/enviar/:
     post:
       tags:
       - notificaciones
-      description: Envía una notificación a cualquier suscriptor. La propiedad "Atributos"
-        es opcional
+      description: Envía una notificación a cualquier suscriptor. La propiedad "Atributos" es opcional
       operationId: NotificacionController.PostOneNotif
       parameters:
       - in: body
@@ -270,17 +301,126 @@ paths:
           description: '{string} Topic eliminado'
         "404":
           description: not found resource
+  /template_email/:
+    get:
+      tags:
+      - template_email
+      description: traer todos los template de aws ses
+      operationId: EmailTemplateController.ListEmailTemplate
+      parameters:
+      - in: query
+        name: nextToken
+        description: posicion en la lista de una llamada previa
+        type: string
+      - in: query
+        name: maxItems
+        description: Numero máximo de mensajes que se pueden recibir (1-100) Por defecto, su valor es 10
+        type: integer
+        format: int64
+      responses:
+        "200":
+          description: string,Status boolean,Message string,Data map[string]interface{}}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
+    put:
+      tags:
+      - template_email
+      description: traer todos los template de aws ses
+      operationId: EmailTemplateController.UpdateEmailTemplate
+      parameters:
+      - in: body
+        name: body
+        description: Body ses.UpdateTemplateInput struct
+        required: true
+        schema:
+          $ref: '#/definitions/ses.UpdateTemplateInput'
+      responses:
+        "200":
+          description: string,Status boolean,Message string,Data map[string]interface{}}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
+    post:
+      tags:
+      - template_email
+      description: Crea un template para un correo personalizado
+      operationId: EmailTemplateController.CreateEmailTemplate
+      parameters:
+      - in: body
+        name: body
+        description: Body ses.CreateTemplateInput struct
+        required: true
+        schema:
+          $ref: '#/definitions/ses.CreateTemplateInput'
+      responses:
+        "201":
+          description: string,Status boolean,Message string,Data map[string]interface{}}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
+  /template_email/{templateName}:
+    get:
+      tags:
+      - template_email
+      description: traer todos los template de aws ses
+      operationId: EmailTemplateController.GetEmailTemplate
+      parameters:
+      - in: path
+        name: templateName
+        description: Nombre del template
+        required: true
+        type: string
+      responses:
+        "201":
+          description: string,Status boolean,Message string,Data map[string]interface{}}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "400":
+          description: Error en parametros ingresados
+    delete:
+      tags:
+      - template_email
+      description: Borra el topic
+      operationId: EmailTemplateController.DeleteEmailTemplate
+      parameters:
+      - in: path
+        name: templateName
+        description: Nombre del template a elimminar
+        required: true
+        type: string
+      responses:
+        "200":
+          description: string,Status boolean,Message string,Data map[string]interface{}}
+          schema:
+            $ref: '#/definitions/map[string]interface{Success'
+        "404":
+          description: not found resource
+  /ws/:
+    get:
+      tags:
+      - ws
+      description: Recibir notificación por medio de webSocket
+      operationId: WebSocketController.WebSocket
+      responses:
+        "200":
+          description: '{string} Notificación recibida'
+        "502":
+          description: Error de conexión
 definitions:
   1192.<nil>.string:
     title: string
     type: object
-  1268.0xc00074eba0.false:
+  7547.0xc000310720.false:
     title: "false"
     type: object
-  1958.0xc00074ed50.false:
+  8237.0xc0003108a0.false:
     title: "false"
     type: object
-  2578.0xc00074ef60.false:
+  8857.0xc000310a80.false:
     title: "false"
     type: object
   map[string]interface{Success:
@@ -352,7 +492,7 @@ definitions:
         additionalProperties:
           type: string
       Body:
-        $ref: '#/definitions/1268.0xc00074eba0.false'
+        $ref: '#/definitions/7547.0xc000310720.false'
       ReceiptHandle:
         type: string
   models.Notificacion:
@@ -364,7 +504,7 @@ definitions:
       Asunto:
         type: string
       Atributos:
-        $ref: '#/definitions/1958.0xc00074ed50.false'
+        $ref: '#/definitions/8237.0xc0003108a0.false'
       DestinatarioId:
         type: array
         items:
@@ -386,7 +526,7 @@ definitions:
       Statement:
         type: array
         items:
-          $ref: '#/definitions/2578.0xc00074ef60.false'
+          $ref: '#/definitions/8857.0xc000310a80.false'
       Version:
         type: string
   models.Suscripcion:
@@ -409,6 +549,18 @@ definitions:
         type: boolean
       Nombre:
         type: string
+  models.inputicacion:
+    title: inputicacion
+    type: object
+  ses.CreateTemplateInput:
+    title: CreateTemplateInput
+    type: object
+  ses.SendBulkTemplatedEmailInput:
+    title: SendBulkTemplatedEmailInput
+    type: object
+  ses.UpdateTemplateInput:
+    title: UpdateTemplateInput
+    type: object
 tags:
 - name: notificaciones
   description: |
@@ -416,3 +568,9 @@ tags:
 - name: colas
   description: |
     ColasController operations for Colas
+- name: email
+  description: |
+    EnviarEmailController operations for inputicacion
+- name: template_email
+  description: |
+    EnviarEmailController operations for inputicacion

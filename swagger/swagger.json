@@ -28,8 +28,7 @@
                         "name": "cola",
                         "description": "Nombre de la cola a borrar",
                         "required": true,
-                        "type": "string",
-                        "pattern": "[^.]$"
+                        "type": "string"
                     }
                 ],
                 "responses": {
@@ -227,6 +226,68 @@
                 }
             }
         },
+        "/email/enviar_email/": {
+            "post": {
+                "tags": [
+                    "email"
+                ],
+                "description": "Envia un correo a los destinatarios elegidos",
+                "operationId": "EnviarEmailController.PostSendEmail",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body de la inputicación",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.inputicacion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
+        "/email/enviar_templated_email/": {
+            "post": {
+                "tags": [
+                    "email"
+                ],
+                "description": "Envia un correo con template a los destinatarios elegidos",
+                "operationId": "EnviarEmailController.PostSendTemplatedEmail",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body con los destinatarios y data",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ses.SendBulkTemplatedEmailInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
         "/notificaciones/enviar/": {
             "post": {
                 "tags": [
@@ -249,7 +310,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -286,7 +347,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data map[string]interface{}}",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -334,7 +395,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string}",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -363,7 +424,7 @@
                     "201": {
                         "description": "string,Status boolean,Message string,Data []string }",
                         "schema": {
-                            "$ref": "#/definitions/resRefactor"
+                            "$ref": "#/definitions/map[string]interface{Success"
                         }
                     },
                     "400": {
@@ -395,9 +456,195 @@
                     }
                 }
             }
+        },
+        "/template_email/": {
+            "get": {
+                "tags": [
+                    "template_email"
+                ],
+                "description": "traer todos los template de aws ses",
+                "operationId": "EmailTemplateController.ListEmailTemplate",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "nextToken",
+                        "description": "posicion en la lista de una llamada previa",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "name": "maxItems",
+                        "description": "Numero máximo de mensajes que se pueden recibir (1-100) Por defecto, su valor es 10",
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "template_email"
+                ],
+                "description": "traer todos los template de aws ses",
+                "operationId": "EmailTemplateController.UpdateEmailTemplate",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body ses.UpdateTemplateInput struct",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ses.UpdateTemplateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "template_email"
+                ],
+                "description": "Crea un template para un correo personalizado",
+                "operationId": "EmailTemplateController.CreateEmailTemplate",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Body ses.CreateTemplateInput struct",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ses.CreateTemplateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            }
+        },
+        "/template_email/{templateName}": {
+            "get": {
+                "tags": [
+                    "template_email"
+                ],
+                "description": "traer todos los template de aws ses",
+                "operationId": "EmailTemplateController.GetEmailTemplate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateName",
+                        "description": "Nombre del template",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "400": {
+                        "description": "Error en parametros ingresados"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "template_email"
+                ],
+                "description": "Borra el topic",
+                "operationId": "EmailTemplateController.DeleteEmailTemplate",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "templateName",
+                        "description": "Nombre del template a elimminar",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "string,Status boolean,Message string,Data map[string]interface{}}",
+                        "schema": {
+                            "$ref": "#/definitions/map[string]interface{Success"
+                        }
+                    },
+                    "404": {
+                        "description": "not found resource"
+                    }
+                }
+            }
+        },
+        "/ws/": {
+            "get": {
+                "tags": [
+                    "ws"
+                ],
+                "description": "Recibir notificación por medio de webSocket",
+                "operationId": "WebSocketController.WebSocket",
+                "responses": {
+                    "200": {
+                        "description": "{string} Notificación recibida"
+                    },
+                    "502": {
+                        "description": "Error de conexión"
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "1192.\u003cnil\u003e.string": {
+            "title": "string",
+            "type": "object"
+        },
+        "7547.0xc000310720.false": {
+            "title": "false",
+            "type": "object"
+        },
+        "8237.0xc0003108a0.false": {
+            "title": "false",
+            "type": "object"
+        },
+        "8857.0xc000310a80.false": {
+            "title": "false",
+            "type": "object"
+        },
+        "map[string]interface{Success": {
+            "title": "map[string]interface{Success",
+            "type": "object"
+        },
         "models.Cola": {
             "title": "Cola",
             "type": "object",
@@ -475,28 +722,10 @@
             "type": "object",
             "properties": {
                 "Filtro": {
-                    "type": "object"
+                    "$ref": "#/definitions/1192.\u003cnil\u003e.string"
                 },
                 "NombreCola": {
                     "type": "string"
-                }
-            }
-        },
-        "resRefactor":{
-            "title": "RespuestaAPIRefactor",
-            "type":"object",
-            "properties": {
-                "Success":{
-                    "type":"string"
-                },
-                "Status":{
-                    "type":"boolean"
-                },
-                "Message":{
-                    "type":"string"
-                },
-                "Data":{
-                    "type":"object"
                 }
             }
         },
@@ -510,7 +739,7 @@
                     }
                 },
                 "Body": {
-                    "type": "object"
+                    "$ref": "#/definitions/7547.0xc000310720.false"
                 },
                 "ReceiptHandle": {
                     "type": "string"
@@ -528,7 +757,7 @@
                     "type": "string"
                 },
                 "Atributos": {
-                    "type": "object"
+                    "$ref": "#/definitions/8237.0xc0003108a0.false"
                 },
                 "DestinatarioId": {
                     "type": "array",
@@ -560,7 +789,7 @@
                 "Statement": {
                     "type": "array",
                     "items": {
-                        "type": "object"
+                        "$ref": "#/definitions/8857.0xc000310a80.false"
                     }
                 },
                 "Version": {
@@ -597,6 +826,22 @@
                     "type": "string"
                 }
             }
+        },
+        "models.inputicacion": {
+            "title": "inputicacion",
+            "type": "object"
+        },
+        "ses.CreateTemplateInput": {
+            "title": "CreateTemplateInput",
+            "type": "object"
+        },
+        "ses.SendBulkTemplatedEmailInput": {
+            "title": "SendBulkTemplatedEmailInput",
+            "type": "object"
+        },
+        "ses.UpdateTemplateInput": {
+            "title": "UpdateTemplateInput",
+            "type": "object"
         }
     },
     "tags": [
@@ -607,6 +852,14 @@
         {
             "name": "colas",
             "description": "ColasController operations for Colas\n"
+        },
+        {
+            "name": "email",
+            "description": "EnviarEmailController operations for inputicacion\n"
+        },
+        {
+            "name": "template_email",
+            "description": "EnviarEmailController operations for inputicacion\n"
         }
     ]
 }

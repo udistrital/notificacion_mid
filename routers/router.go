@@ -25,6 +25,21 @@ func init() {
 				&controllers.ColasController{},
 			),
 		),
+		beego.NSNamespace("/email",
+			beego.NSInclude(
+				&controllers.EnviarEmailController{},
+			),
+		),
+		beego.NSNamespace("/template_email",
+			beego.NSInclude(
+				&controllers.EmailTemplateController{},
+			),
+		),
+		beego.NSNamespace("/ws",
+			beego.NSInclude(
+				&controllers.WebSocketController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }
